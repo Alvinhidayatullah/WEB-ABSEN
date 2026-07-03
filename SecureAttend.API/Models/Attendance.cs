@@ -15,5 +15,6 @@ namespace SecureAttend.API.Models
         public double? Longitude { get; set; }
         public bool IsMockLocation { get; set; } = false; // Mock GPS / Fake Location Detection
         public string? IP_Address { get; set; }
+        public string? Keterangan { get; set; } // Untuk Izin / Sakit
     }
 }

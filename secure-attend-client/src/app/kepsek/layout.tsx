@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-export default function TeacherLayout({
+export default function KepsekLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -31,20 +31,31 @@ export default function TeacherLayout({
         <div className="flex-1 flex justify-between md:justify-start items-center md:items-start md:flex-col w-full">
           <div>
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-primary">SecureAttend</h2>
-            <p className="hidden md:block text-xs text-foreground/50 mb-8 font-mono">PORTAL GURU</p>
+            <p className="hidden md:block text-xs text-foreground/50 mb-8 font-mono">PORTAL KEPSEK</p>
           </div>
           
           <nav className="flex flex-row md:flex-col space-x-2 md:space-x-0 md:space-y-2 overflow-x-auto w-full">
             <Link 
-              href="/teacher" 
-              className={`flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                pathname === "/teacher" 
+              href="/kepsek" 
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors whitespace-nowrap ${
+                pathname === "/kepsek" 
                   ? "bg-primary/10 text-primary" 
                   : "text-foreground/70 hover:bg-card-hover hover:text-primary"
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
               <span className="hidden md:inline">Panel Absensi</span>
+            </Link>
+            <Link 
+              href="/kepsek/evaluasi" 
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors whitespace-nowrap ${
+                pathname.startsWith("/kepsek/evaluasi") 
+                  ? "bg-primary/10 text-primary" 
+                  : "text-foreground/70 hover:bg-card-hover hover:text-primary"
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <span className="hidden md:inline">Evaluasi Bulanan</span>
             </Link>
           </nav>
         </div>

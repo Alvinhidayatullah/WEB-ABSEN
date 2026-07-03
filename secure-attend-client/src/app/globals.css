@@ -54,3 +54,18 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   @apply antialiased;
 }
+
+/* Memperbaiki masalah kotak (outline) saat refresh / navigasi di Next.js */
+[tabindex="-1"]:focus {
+  outline: none !important;
+}
+
+/* Aksesibilitas: hanya tampilkan outline saat navigasi menggunakan keyboard (Tab) */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

@@ -82,5 +82,17 @@ namespace SecureAttend.API.Controllers
                 user = new { id = user.Id, nama = user.Nama, role = user.Role } 
             });
         }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("SecureAttend_Session", new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax
+            });
+            return Ok(new { message = "Logout berhasil." });
+        }
     }
 }
