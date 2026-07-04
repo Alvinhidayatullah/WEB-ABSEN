@@ -45,7 +45,7 @@ export default function KepsekEvaluasi() {
     const XLSX = await import('xlsx');
 
     // Header Excel
-    const headers = ["Tanggal", "Nama", "Status", "Keterangan/Waktu"];
+    const headers = ["Tanggal", "Nama", "Status", "Jam Masuk", "Keterangan"];
     
     // Baris Excel
     const excelRows = data.map(row => {
@@ -53,7 +53,8 @@ export default function KepsekEvaluasi() {
         row.tanggal.split('T')[0],
         row.nama,
         row.status,
-        row.status === 'Hadir' ? (row.jamMasuk || "-") : `(${row.jamMasuk || "-"}) ${row.keterangan || "-"}`
+        row.jamMasuk || "-",
+        row.keterangan || "-"
       ];
     });
 
@@ -234,7 +235,8 @@ export default function KepsekEvaluasi() {
                   <th className="p-4 font-medium whitespace-nowrap">Tanggal</th>
                   <th className="p-4 font-medium whitespace-nowrap">Nama & ID</th>
                   <th className="p-4 font-medium whitespace-nowrap">Status</th>
-                  <th className="p-4 font-medium whitespace-nowrap">Keterangan / Waktu</th>
+                  <th className="p-4 font-medium whitespace-nowrap">Jam Masuk</th>
+                  <th className="p-4 font-medium whitespace-nowrap">Keterangan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-primary/5 text-sm">
@@ -263,17 +265,15 @@ export default function KepsekEvaluasi() {
                         {row.status}
                       </span>
                     </td>
+                    <td className="p-4 font-mono text-primary whitespace-nowrap">
+                      {row.jamMasuk || "-"}
+                    </td>
                     <td className="p-4">
                       {row.status === 'Hadir' ? (
-                        <div className="text-primary font-mono bg-primary/5 inline-block px-2 py-1 rounded">
-                          Jam Masuk: {row.jamMasuk || "-"}
-                        </div>
+                        <span className="text-foreground/30">-</span>
                       ) : (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-primary font-mono text-xs font-bold bg-primary/5 inline-block px-2 py-1 rounded w-fit">{row.jamMasuk || "-"}</span>
-                          <span className="text-foreground/80 text-xs italic max-w-xs truncate" title={row.keterangan}>
-                            "{row.keterangan}"
-                          </span>
+                        <div className="text-foreground/80 text-xs italic max-w-xs truncate" title={row.keterangan}>
+                          "{row.keterangan}"
                         </div>
                       )}
                     </td>
