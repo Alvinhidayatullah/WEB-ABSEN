@@ -44,7 +44,7 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            var token = context.Request.Cookies["SecureAttend_Session"];
+            var token = context.Request.Cookies["RuangHadir_Session"];
             if (!string.IsNullOrEmpty(token))
             {
                 context.Token = token;
