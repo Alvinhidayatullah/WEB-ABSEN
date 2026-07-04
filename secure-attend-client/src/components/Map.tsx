@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -51,8 +51,38 @@ function FlyToUser({ lat, lng }: { lat: number; lng: number }) {
 }
 
 export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMeters, accuracy, distance }: MapProps) {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Deteksi tema gelap dari class 'dark' di html atau preferensi sistem
+    const checkTheme = () => {
+      const hasDarkClass = document.documentElement.classList.contains('dark');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(hasDarkClass || prefersDark);
+    };
+    
+    checkTheme(); // cek awal
+    
+    // Observer untuk mendeteksi perubahan class 'dark' pada <html> (jika pakai next-themes)
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    // Listener untuk perubahan preferensi sistem
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkTheme);
+
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener('change', checkTheme);
+    };
+  }, []);
+
   const isInRadius = !!(userLat && userLng && distance !== null && distance !== undefined && distance <= radiusMeters);
-  const geofenceColor = (userLat && userLng) ? (isInRadius ? '#22c55e' : '#ef4444') : '#5ca167';
+  const geofenceColor = (userLat && userLng) ? (isInRadius ? '#22c55e' : '#ef4444') : (isDarkMode ? '#5ca167' : '#16a34a');
+  
+  const mapUrl = isDarkMode 
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
   return (
     <div className="flex flex-col gap-3 w-full relative z-20">
@@ -92,7 +122,7 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
           @keyframes pulse-pin { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
         `}</style>
         <MapContainer center={[schoolLat, schoolLng]} zoom={18} style={{ height: '100%', width: '100%' }} attributionControl={false}>
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
+          <TileLayer key={isDarkMode ? 'dark' : 'light'} url={mapUrl} maxZoom={22} />
 
           {/* Zona aura luar */}
           <Circle center={[schoolLat, schoolLng]} radius={radiusMeters * 1.8}

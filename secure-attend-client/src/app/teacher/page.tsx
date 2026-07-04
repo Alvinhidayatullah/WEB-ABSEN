@@ -13,7 +13,7 @@ const DynamicMap = dynamic(() => import("@/components/Map"), {
 
 const SCHOOL_LAT = -7.014843;
 const SCHOOL_LNG = 106.545348;
-const RADIUS_METERS = 100;
+const RADIUS_METERS = 300;
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371e3;

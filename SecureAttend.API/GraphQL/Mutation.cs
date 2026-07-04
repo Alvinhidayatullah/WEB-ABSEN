@@ -20,7 +20,7 @@ namespace SecureAttend.API.GraphQL
     {
         private const double SCHOOL_LAT = -7.014843;
         private const double SCHOOL_LNG = 106.545348;
-        private const double MAX_RADIUS_METERS = 100.0;
+        private const double MAX_RADIUS_METERS = 300.0;
 
         private double CalculateDistanceMeters(double lat1, double lon1, double lat2, double lon2)
         {
