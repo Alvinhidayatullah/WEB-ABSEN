@@ -184,7 +184,7 @@ export default function KepsekDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         <div className="order-2 lg:order-1 relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 pointer-events-none"></div>
           <DynamicMap 
             schoolLat={SCHOOL_LAT} 
             schoolLng={SCHOOL_LNG} 

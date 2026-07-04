@@ -83,12 +83,12 @@ export default function KelolaPengguna() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Form Tambah Pengguna */}
         <div className="lg:col-span-1">
           <div className="bg-card p-6 rounded-2xl shadow-sm border border-primary/10 sticky top-6">
             <h2 className="text-xl font-semibold mb-4 text-primary">Tambah Akun Baru</h2>
-            
+
             {message.text && (
               <div className={`p-3 mb-4 rounded-xl text-sm border ${message.type === 'success' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
                 {message.text}
@@ -100,7 +100,7 @@ export default function KelolaPengguna() {
                 <label className="block text-sm font-medium text-foreground/80">Role Sistem</label>
                 <select
                   value={form.role}
-                  onChange={(e) => setForm({...form, role: e.target.value})}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
                   className="w-full px-4 py-2 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-semibold"
                 >
                   <option value="GURU">Guru</option>
@@ -113,7 +113,7 @@ export default function KelolaPengguna() {
                 <input
                   type="text"
                   value={form.username}
-                  onChange={(e) => setForm({...form, username: e.target.value})}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
                   className="w-full px-4 py-2 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   required
                 />
@@ -123,7 +123,7 @@ export default function KelolaPengguna() {
                 <input
                   type="text"
                   value={form.nama}
-                  onChange={(e) => setForm({...form, nama: e.target.value})}
+                  onChange={(e) => setForm({ ...form, nama: e.target.value })}
                   className="w-full px-4 py-2 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   required
                 />
@@ -133,7 +133,7 @@ export default function KelolaPengguna() {
                 <input
                   type="text"
                   value={form.password}
-                  onChange={(e) => setForm({...form, password: e.target.value})}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="w-full px-4 py-2 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   required
                 />
@@ -156,7 +156,7 @@ export default function KelolaPengguna() {
               <h2 className="text-xl font-semibold text-foreground">Daftar Pengguna Terdaftar</h2>
               <span className="bg-primary/20 text-primary text-xs font-bold px-3 py-1 rounded-full">{users.length} Total</span>
             </div>
-            
+
             {isLoading ? (
               <div className="p-8 space-y-4">
                 <div className="h-10 bg-primary/5 animate-pulse rounded-xl" />
@@ -165,7 +165,7 @@ export default function KelolaPengguna() {
               </div>
             ) : users.length === 0 ? (
               <div className="p-12 text-center text-foreground/50">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-50"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-50"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                 <p>Belum ada pengguna yang didaftarkan.</p>
               </div>
             ) : (
@@ -176,7 +176,7 @@ export default function KelolaPengguna() {
                       <th className="p-4 font-medium">Username</th>
                       <th className="p-4 font-medium">Nama Lengkap</th>
                       <th className="p-4 font-medium">Role</th>
-                      <th className="p-4 font-medium text-right">Aksi Manajerial</th>
+                      <th className="p-4 font-medium text-right">Aksi Manajemen</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-primary/5 text-sm">
@@ -186,9 +186,9 @@ export default function KelolaPengguna() {
                         <td className="p-4 font-medium text-foreground">{u.nama}</td>
                         <td className="p-4">
                           <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium 
-                            ${u.role === 'SUPER_ADMIN' ? 'bg-amber-500/10 text-amber-500' : 
-                              u.role === 'KEPALA_SEKOLAH' ? 'bg-blue-500/10 text-blue-500' : 
-                              'bg-primary/10 text-primary'}`}>
+                            ${u.role === 'SUPER_ADMIN' ? 'bg-amber-500/10 text-amber-500' :
+                              u.role === 'KEPALA_SEKOLAH' ? 'bg-blue-500/10 text-blue-500' :
+                                'bg-primary/10 text-primary'}`}>
                             {u.role}
                           </span>
                         </td>
@@ -199,7 +199,7 @@ export default function KelolaPengguna() {
                               className="inline-flex items-center gap-2 px-3 py-1.5 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg transition-colors text-xs font-bold"
                               title="Hapus permanen akun ini"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
                               Hapus
                             </button>
                           ) : (
