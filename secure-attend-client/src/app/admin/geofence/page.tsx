@@ -45,7 +45,7 @@ export default function GeofenceSystem() {
 
         {/* Peta (Preview) */}
         <div className="lg:col-span-2 relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary to-green-600 rounded-2xl blur opacity-25"></div>
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary to-green-600 rounded-2xl blur opacity-25 pointer-events-none"></div>
           <DynamicMap
             schoolLat={SCHOOL_LAT}
             schoolLng={SCHOOL_LNG}

@@ -55,7 +55,7 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
   }
 
   return (
-    <div className="flex flex-col gap-3 w-full">
+    <div className="flex flex-col gap-3 w-full relative z-20">
       {/* Tombol diletakkan di luar area peta agar lebih jelas dan tidak mengganggu */}
       <div className="flex justify-end w-full">
         <button 
