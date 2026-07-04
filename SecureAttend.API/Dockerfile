@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore as distinct layers
@@ -10,12 +10,12 @@ COPY . .
 RUN dotnet publish "SecureAttend.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
 # Railway injects PORT environment variable.
-# We configure ASP.NET Core to listen on that port.
-ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
+ENV PORT=8080
+ENV ASPNETCORE_URLS=http://+:${PORT}
 
 ENTRYPOINT ["dotnet", "SecureAttend.API.dll"]
