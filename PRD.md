@@ -16,13 +16,13 @@ Aplikasi menggunakan arsitektur *Separated Fullstack* (*Decoupled*) untuk isolas
 
 ## 3. Spesifikasi UI/UX & Desain Estetika (Eco-Tech Theme)
 Antarmuka dirancang fungsional, estetik, dan nyaman di mata untuk penggunaan harian:
-* **Mobile-First 720x1560 Optimization:** Tata letak dibangun presisi pada rasio 720x1560 piksel, memastikan performa *rendering* instan tanpa *lag* di HP Android tipe apa pun.
-* **Elemen Visual Santai & Keren:** Mengusung palet warna hijau yang santai (*sage green* atau *emerald* redup) yang tidak memaksa mata, cocok dengan identitas SMK Pertanian namun tetap elegan untuk instansi lain. Dipadukan dengan mode gelap (*clean dark mode*) atau mode terang yang lembut. Tombol navigasi dibuat lugas dan besar (misal: "KEMBALI", "ABSEN MASUK").
+* **Mobile-First Responsive (No Letterboxing):** Tata letak dibangun presisi pada rasio 720x1560 piksel dengan konfigurasi skala *viewport* absolut. Sidebar *desktop* otomatis bertransisi menjadi navigasi bar *scrollable* horizontal (`flex-col` to `flex-row` di navigasi) di bagian bawah/atas pada tampilan *mobile* (seperti iPhone dan Android) demi menghilangkan efek sempit (*letterboxing*) dan memperluas visibilitas data.
+* **Elemen Visual Santai & Keren:** Mengusung palet warna hijau yang santai (*sage green* atau *emerald* redup) yang tidak memaksa mata, cocok dengan identitas SMK Pertanian namun tetap elegan untuk instansi lain. Dipadukan dengan mode gelap (*clean dark mode*) atau mode terang yang lembut. Tombol navigasi dibuat lugas dan besar (misal: "KEMBALI", "ABSEN SEKARANG").
 * **Halaman 403 Forbidden yang Elegan:** Jika pengguna mencoba meraba URL terlarang (`/admin`, `/config`), sistem menampilkan halaman 403 yang estetik namun intimidatif. Latar belakang hijau gelap berpadu hitam, tipografi bersih bertuliskan "ACCESS DENIED - ANOMALY DETECTED", disertai efek *glitch* digital halus dan hitung mundur otomatis sebelum dikembalikan ke halaman *login*.
 
 ## 4. Standar Keamanan OWASP Top-10 & Active Defense
-Aplikasi ini kebal terhadap kerentanan aplikasi web paling kritis, dipadukan dengan pertahanan aktif:
-* **Broken Access Control (BAC):** Validasi ganda (Frontend & Backend). Setiap *request* API diperiksa *Role Claim*-nya. Modifikasi ID pada *request* (IDOR) langsung memicu pemutusan sesi permanen.
+* **Sesi JWT & Anti-Cookie Injection (3 Hari):** Mengurangi resiko injeksi cookie menggunakan *Secure HttpOnly Cookies* dengan perlindungan *SameSite* yang masa hidupnya diperpanjang secara mutlak menjadi 3 hari demi kenyamanan staf guru.
+* **Broken Access Control (BAC) Strict Enforcement:** Validasi ganda (Frontend & Backend). Fungsi pembuatan pengguna (`CreateUser`) mutlak dijaga oleh anotasi *Roles* C# untuk menolak permohonan ilegal. Operasi *Update Profile* menggunakan arsitektur *Strongly-Typed Model Binding* yang secara alami memiliki **0% kemungkinan Mass Assignment IDOR** (seorang Guru tidak mungkin bisa menginjeksi JSON untuk menyulap jabatannya menjadi *Super Admin*).
 * **Injection (SQLi & Command Injection):** Entity Framework Core menggunakan *Parameterized Queries* murni. *Payload* injeksi kutip tunggal (`' OR 1=1--`) otomatis dinetralisir menjadi teks biasa.
 * **Cross-Site Scripting (XSS):** React 19 melakukan *escape* pada semua *output*. *Backend* menerapkan *Content-Security-Policy (CSP)* ketat untuk menolak eksekusi skrip eksternal.
 * **XML External Entities (XXE):** *Backend* .NET hanya menerima *payload* JSON, memblokir penguraian (*parsing*) XML secara total.
@@ -32,8 +32,10 @@ Aplikasi ini kebal terhadap kerentanan aplikasi web paling kritis, dipadukan den
 
 ## 5. Fitur Anti-Kecurangan Absensi (Anti-Fraud) & RBAC
 * **SUPER_ADMIN, KEPALA_SEKOLAH, GURU:** Pemisahan hak akses ketat sesuai tupoksi masing-masing.
+* **Waktu Mutlak Global Server (UTC+7 WIB):** Backend dan Frontend memiliki logika sinkronisasi kalkulasi yang memaksa seluruh catatan kehadiran dikunci pada zona waktu Waktu Indonesia Barat (WIB). Pergantian batas hari pasti terjadi persis pada 00:00 WIB, menangkal bug *timezone* di perangkat staf yang kebetulan sedang berada di WITA atau WIT.
 * **Strict Geofencing Radius Check:** Kalkulasi jarak kordinat dilakukan murni di *server-side* (.NET) menggunakan rumus *Haversine*.
 * **Mock GPS / Fake Location Detection:** Validasi anomali *payload* Geolocation API untuk memblokir aplikasi pemalsu lokasi.
+* **Validasi Wajib Izin & Sakit:** Saat mengirim laporan Izin / Lapor Sakit, alasan/keterangan menjadi syarat mutlak wajib diisi dengan validasi dua lapis (*frontend text required* dan *backend HTTP 400 Bad Request* rejection jika kosong).
 * **Hardware Binding (Device Fingerprinting):** Mengunci kombinasi akun guru dengan `DeviceID` fisik saat login pertama. Mencegah praktik titip absen dari HP lain.
 
 ## 6. Struktur Direktori Utama (Monorepo / Dual-Repository)
