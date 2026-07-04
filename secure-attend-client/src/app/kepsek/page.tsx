@@ -15,6 +15,19 @@ const SCHOOL_LAT = -7.014843;
 const SCHOOL_LNG = 106.545348;
 const RADIUS_METERS = 300;
 
+async function generateTamperSignature(lat: number, lng: number): Promise<string> {
+  const secret = process.env.NEXT_PUBLIC_TAMPER_SECRET;
+  if (!secret) return "";
+  const payload = `${lat},${lng}`;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
+  const hashArray = Array.from(new Uint8Array(signature));
+  return btoa(hashArray.map(b => String.fromCharCode(b)).join(''));
+}
+
 function formatTimeSpan(pt: string) {
   if (!pt) return "-";
   if (!pt.startsWith('PT')) return pt.length >= 8 ? pt.substring(0, 8) : pt;
@@ -181,10 +194,14 @@ export default function KepsekDashboard() {
       setUserAccuracy(accuracy);
       setUserDistance(haversineDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG));
       setCheckInStep("Mengirim ke server untuk verifikasi akhir...");
+      const signature = await generateTamperSignature(lat, lng);
       const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Tamper-Signature": signature
+        },
         credentials: "include",
         body: JSON.stringify({
           query: `mutation CheckIn($lat: Float, $lng: Float, $isMock: Boolean!, $accuracy: Float) {
@@ -317,7 +334,7 @@ export default function KepsekDashboard() {
             <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
               <div className="mb-6 mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20 shadow-inner">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></svg>
               </div>
               <h2 className="text-xl md:text-2xl font-bold mb-2 tracking-tight">Absensi Kepsek</h2>
               <p className="text-foreground/60 mb-6 max-w-sm mx-auto text-sm leading-relaxed">
@@ -329,7 +346,7 @@ export default function KepsekDashboard() {
                   <div className="bg-foreground/5 rounded-xl p-2.5">
                     <div className="text-foreground/50 mb-0.5">Jarak ke Sekolah</div>
                     <div className={`font-bold font-mono text-sm ${userDistance !== null && userDistance !== undefined && userDistance <= RADIUS_METERS ? 'text-green-500' : 'text-red-500'}`}>
-                      {userDistance !== null && userDistance !== undefined ? `${Math.round(userDistance)} m` : '-'}
+                      {userDistance !== null && userDistance !== undefined ? `${Math.round(userDistance)}m` : '-'}
                     </div>
                   </div>
                   <div className="bg-foreground/5 rounded-xl p-2.5">
@@ -350,7 +367,7 @@ export default function KepsekDashboard() {
                   className={`px-8 py-3.5 w-full md:w-auto min-w-[240px] rounded-2xl font-bold transition-all flex items-center justify-center gap-2 mx-auto ${hasCheckedInToday ? 'bg-foreground/5 text-foreground/40 cursor-not-allowed border border-foreground/10' : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 border border-primary shadow-lg shadow-primary/20'}`}>
                   {isCheckingIn ? (<><svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>MEMVALIDASI...</>) : hasCheckedInToday ? "SUDAH ABSEN HARI INI" : (
                     <>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5l10 -10"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
                       ABSEN SEKARANG
                     </>
                   )}

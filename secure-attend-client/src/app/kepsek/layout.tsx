@@ -30,7 +30,7 @@ const GRAPHQL_URL = "/api/graphql";
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Sidebar untuk Desktop / Navbar bawah untuk Mobile */}
-      <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-primary/10 flex flex-col p-4 md:p-6 shadow-sm z-20 sticky top-0 md:h-screen overflow-hidden">
+      <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-primary/10 flex flex-col p-4 md:p-6 shadow-sm z-[9999] sticky top-0 md:h-screen overflow-hidden">
         <div className="flex-1 flex flex-col gap-4 w-full">
           <div>
             <h2 className="text-xl md:text-2xl font-black tracking-tighter">

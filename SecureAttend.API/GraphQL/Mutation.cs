@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
@@ -103,7 +105,8 @@ namespace SecureAttend.API.GraphQL
             bool isMockLocation,
             double? accuracy,
             [Service] ApplicationDbContext context,
-            [Service] IHttpContextAccessor httpContextAccessor)
+            [Service] IHttpContextAccessor httpContextAccessor,
+            [Service] IConfiguration config)
         {
             var userIdStr = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdStr, out int userId)) throw new GraphQLException("Sesi tidak valid.");
@@ -111,6 +114,25 @@ namespace SecureAttend.API.GraphQL
             // === LAYER 1: Cek data koordinat ada ===
             if (!latitude.HasValue || !longitude.HasValue)
                 throw new GraphQLException("Koordinat GPS tidak ditemukan. Pastikan akses lokasi diizinkan.");
+
+            // === LAYER 1.5: Anti-Tamper Security (HMAC) ===
+            var tamperSecret = config["TamperSecret"];
+            if (!string.IsNullOrEmpty(tamperSecret)) 
+            {
+                var signatureHeader = httpContextAccessor.HttpContext?.Request.Headers["X-Tamper-Signature"].FirstOrDefault();
+                if (string.IsNullOrEmpty(signatureHeader)) {
+                    throw new GraphQLException("Akses Ditolak! Keamanan Anti-Tamper: Signature hilang.");
+                }
+
+                var payloadStr = $"{latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(tamperSecret))) {
+                    var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(payloadStr));
+                    var expectedSignature = Convert.ToBase64String(hashBytes);
+                    if (signatureHeader != expectedSignature) {
+                        throw new GraphQLException("Akses Ditolak! Manipulasi Request (Tampering) Terdeteksi.");
+                    }
+                }
+            }
 
             // === LAYER 2: Anti Fake GPS — flag dari browser ===
             if (isMockLocation)

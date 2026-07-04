@@ -15,6 +15,19 @@ const SCHOOL_LAT = -7.014843;
 const SCHOOL_LNG = 106.545348;
 const RADIUS_METERS = 300;
 
+async function generateTamperSignature(lat: number, lng: number): Promise<string> {
+  const secret = process.env.NEXT_PUBLIC_TAMPER_SECRET;
+  if (!secret) return "";
+  const payload = `${lat},${lng}`;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
+  const hashArray = Array.from(new Uint8Array(signature));
+  return btoa(hashArray.map(b => String.fromCharCode(b)).join(''));
+}
+
 function formatTimeSpan(pt: string) {
   if (!pt) return "-";
   if (!pt.startsWith('PT')) return pt.length >= 8 ? pt.substring(0, 8) : pt;
@@ -181,10 +194,14 @@ export default function TeacherDashboard() {
       setUserAccuracy(accuracy);
       setUserDistance(haversineDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG));
       setCheckInStep("Mengirim ke server untuk verifikasi akhir...");
+      const signature = await generateTamperSignature(lat, lng);
       const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Tamper-Signature": signature
+        },
         credentials: "include",
         body: JSON.stringify({
           query: `mutation CheckIn($lat: Float, $lng: Float, $isMock: Boolean!, $accuracy: Float) {
