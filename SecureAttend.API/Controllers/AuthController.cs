@@ -69,12 +69,12 @@ namespace SecureAttend.API.Controllers
             var tokenString = tokenHandler.WriteToken(token);
 
             // 3. Set HttpOnly Cookie
-            Response.Cookies.Append("SecureAttend_Session", tokenString, new Microsoft.AspNetCore.Http.CookieOptions
+            Response.Cookies.Append("RuangHadir_Session", tokenString, new Microsoft.AspNetCore.Http.CookieOptions
             {
                 HttpOnly = true,
-                Secure = true, // OWASP: Enforce secure flag
-                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax,
-                Expires = System.DateTimeOffset.UtcNow.AddDays(3)
+                Secure = true, // Ubah ke true jika sudah pakai HTTPS
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                Expires = System.DateTime.UtcNow.AddDays(3)
             });
 
             return Ok(new { 
@@ -86,13 +86,13 @@ namespace SecureAttend.API.Controllers
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            Response.Cookies.Delete("SecureAttend_Session", new Microsoft.AspNetCore.Http.CookieOptions
+            Response.Cookies.Delete("RuangHadir_Session", new Microsoft.AspNetCore.Http.CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict
             });
-            return Ok(new { message = "Logout berhasil." });
+            return Ok(new { message = "Berhasil keluar." });
         }
     }
 }

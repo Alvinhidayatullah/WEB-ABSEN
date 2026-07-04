@@ -30,7 +30,7 @@ export default function AdminLayout({
       <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-primary/10 flex flex-col p-4 md:p-6 shadow-sm md:h-screen md:sticky top-0 z-20 overflow-hidden">
         <div className="flex-1 flex flex-col gap-4 w-full">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-primary">SecureAttend</h2>
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-primary">RuangHadir</h2>
             <p className="hidden md:block text-xs text-foreground/50 mb-8 font-mono">SUPER_ADMIN PORTAL</p>
           </div>
           

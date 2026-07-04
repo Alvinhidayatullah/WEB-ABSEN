@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get('SecureAttend_Session');
+  const sessionCookie = request.cookies.get('RuangHadir_Session');
   const path = request.nextUrl.pathname;
   
   if (!sessionCookie) {

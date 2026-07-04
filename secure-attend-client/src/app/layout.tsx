@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SecureAttend - Sistem Absensi",
-  description: "SecureAttend by Elite Sentinel Cybercorp",
+  title: "RuangHadir - Sistem Absensi",
+  description: "RuangHadir by Elite Sentinel Cybercorp",
 };
 
 export const viewport = {
