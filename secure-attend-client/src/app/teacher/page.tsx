@@ -69,15 +69,17 @@ export default function TeacherDashboard() {
               isMockLocation: false 
             })
           });
-          const data = await res.json();
+          let data: any = {};
+          try { data = await res.json(); } catch(e) {}
+
           if (res.ok) {
             setMessage({ type: "success", text: "Absensi berhasil dicatat!" });
             fetchHistory();
           } else {
-            setMessage({ type: "error", text: data.message || "Gagal absen." });
+            setMessage({ type: "error", text: data.message || `Gagal absen (Error ${res.status}).` });
           }
         } catch (err) {
-          setMessage({ type: "error", text: "Terjadi kesalahan server." });
+          setMessage({ type: "error", text: "Terjadi kesalahan server saat check-in." });
         } finally {
           setIsCheckingIn(false);
         }
@@ -111,17 +113,19 @@ export default function TeacherDashboard() {
           keterangan: keterangan
         })
       });
-      const data = await res.json();
+      let data: any = {};
+      try { data = await res.json(); } catch(e) {}
+
       if (res.ok) {
         setMessage({ type: "success", text: `Pengajuan ${permitModal.type} berhasil dicatat!` });
         setPermitModal({ isOpen: false, type: null });
         setKeterangan("");
         fetchHistory();
       } else {
-        setMessage({ type: "error", text: data.message || `Gagal mengajukan ${permitModal.type}.` });
+        setMessage({ type: "error", text: data.message || `Gagal mengajukan ${permitModal.type} (Error ${res.status}).` });
       }
     } catch (err) {
-      setMessage({ type: "error", text: "Terjadi kesalahan server." });
+      setMessage({ type: "error", text: "Terjadi kesalahan jaringan/server saat pengajuan." });
     } finally {
       setIsSubmittingPermit(false);
     }
