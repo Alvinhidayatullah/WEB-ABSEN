@@ -60,9 +60,9 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       setIsDarkMode(hasDarkClass || prefersDark);
     };
-    
+
     checkTheme(); // cek awal
-    
+
     // Observer untuk mendeteksi perubahan class 'dark' pada <html> (jika pakai next-themes)
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -79,38 +79,40 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
 
   const isInRadius = !!(userLat && userLng && distance !== null && distance !== undefined && distance <= radiusMeters);
   const geofenceColor = (userLat && userLng) ? (isInRadius ? '#22c55e' : '#ef4444') : (isDarkMode ? '#5ca167' : '#16a34a');
-  
-  const mapUrl = isDarkMode 
+
+  const mapUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
     : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
   return (
     <div className="flex flex-col gap-3 w-full relative z-20">
       {/* Status Bar */}
-      <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-500 ${
-        !userLat ? 'bg-card border-primary/20 text-foreground/50' :
+      <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-500 ${!userLat ? 'bg-card border-primary/20 text-foreground/50' :
         isInRadius ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400' :
-                     'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
-      }`}>
+          'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+        }`}>
         <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${
-            !userLat ? 'bg-foreground/30' :
+          <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${!userLat ? 'bg-foreground/30' :
             isInRadius ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]' :
-                         'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'
-          }`} />
+              'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'
+            }`} />
           <span>
             {!userLat ? 'Menunggu sinyal GPS...' :
-             isInRadius ? '✅ DALAM ZONA AMAN — Siap Absen' :
-                          '⛔ DI LUAR ZONA SEKOLAH'}
+              isInRadius ? 'DALAM ZONA AMAN — Siap Absen' :
+                'DI LUAR ZONA SEKOLAH'}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-xs font-mono">
+        <div className="flex items-center gap-4 text-xs font-mono font-medium">
           {distance !== null && distance !== undefined && (
-            <span className="opacity-80">📏 {Math.round(distance)}m</span>
+            <span className="flex items-center gap-1.5 opacity-80">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21 16-4-4"/><path d="M17 21l4-4"/><path d="M3 16l4-4"/><path d="M7 21l-4-4"/><path d="M12 3v18"/><path d="M3 12h18"/></svg>
+              {Math.round(distance)}m
+            </span>
           )}
           {accuracy !== null && accuracy !== undefined && (
-            <span className={accuracy <= 20 ? 'text-green-500' : accuracy <= 50 ? 'text-amber-500' : 'text-red-500'}>
-              🎯 ±{Math.round(accuracy)}m
+            <span className={`flex items-center gap-1.5 ${accuracy <= 20 ? 'text-green-500' : accuracy <= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              ±{Math.round(accuracy)}m
             </span>
           )}
         </div>
@@ -158,10 +160,10 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
                 <Popup>
                   <strong>📍 Posisi Anda</strong><br />
                   <span style={{ color: isInRadius ? '#22c55e' : '#ef4444', fontWeight: 'bold' }}>
-                    {isInRadius ? '✅ Dalam Zona Aman' : '⛔ Di Luar Zona!'}
+                    {isInRadius ? 'Dalam Zona Aman' : 'Di Luar Zona!'}
                   </span><br />
-                  Jarak: <strong>{distance !== null && distance !== undefined ? `${Math.round(distance)}m` : 'N/A'}</strong><br />
-                  Akurasi: <strong>{accuracy ? `±${Math.round(accuracy)}m` : 'N/A'}</strong>
+                  Jarak: <strong>{distance !== null && distance !== undefined ? `${Math.round(distance)} m` : 'N/A'}</strong><br />
+                  Akurasi: <strong>{accuracy ? `±${Math.round(accuracy)} m` : 'N/A'}</strong>
                 </Popup>
               </Marker>
               <FlyToUser lat={userLat} lng={userLng} />

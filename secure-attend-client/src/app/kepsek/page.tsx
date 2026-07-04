@@ -75,7 +75,7 @@ export default function KepsekDashboard() {
 
   async function fetchHistory() {
     try {
-const GRAPHQL_URL = "/api/graphql";
+      const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,7 +181,7 @@ const GRAPHQL_URL = "/api/graphql";
       setUserAccuracy(accuracy);
       setUserDistance(haversineDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG));
       setCheckInStep("Mengirim ke server untuk verifikasi akhir...");
-const GRAPHQL_URL = "/api/graphql";
+      const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -218,7 +218,7 @@ const GRAPHQL_URL = "/api/graphql";
     setIsSubmittingPermit(true);
     setMessage({ type: "", text: "" });
     try {
-const GRAPHQL_URL = "/api/graphql";
+      const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -259,7 +259,7 @@ const GRAPHQL_URL = "/api/graphql";
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-md p-4">
           <div className="bg-card w-full max-w-md p-8 rounded-3xl shadow-2xl border border-destructive/20 text-center animate-in zoom-in-95 duration-500">
             <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-destructive" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-destructive" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
             </div>
             <h2 className="text-2xl font-black text-foreground mb-4 tracking-tight">Akses Lokasi Wajib Aktif</h2>
             <p className="text-foreground/70 mb-8">{locationError}</p>
@@ -272,133 +272,138 @@ const GRAPHQL_URL = "/api/graphql";
           </div>
         </div>
       )}
-    <div className={`space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative ${locationError ? 'opacity-0 pointer-events-none' : ''}`}>
-      {permitModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in p-4">
-          <div className="bg-card w-full max-w-md p-6 rounded-2xl shadow-xl border border-primary/20">
-            <h3 className="text-xl font-bold mb-2">Pengajuan {permitModal.type}</h3>
-            <p className="text-foreground/60 text-sm mb-6">Harap masukkan alasan dengan jelas. Data akan direkam ke Kepala Sekolah.</p>
-            <form onSubmit={handlePermitSubmit}>
-              <textarea value={keterangan} onChange={(e) => setKeterangan(e.target.value)}
-                className="w-full h-32 px-4 py-3 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all mb-4 resize-none"
-                placeholder={`Masukkan alasan ${permitModal.type}...`} required />
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setPermitModal({ isOpen: false, type: null })}
-                  className="flex-1 px-4 py-2 rounded-xl font-bold bg-foreground/5 text-foreground hover:bg-foreground/10 transition-colors">Batal</button>
-                <button type="submit" disabled={isSubmittingPermit || !keterangan.trim()}
-                  className={`flex-1 px-4 py-2 rounded-xl font-bold transition-all ${permitModal.type === 'Sakit' ? 'bg-destructive text-white hover:bg-destructive/90' : 'bg-amber-500 text-white hover:bg-amber-600'} disabled:opacity-50`}>
-                  {isSubmittingPermit ? "Memproses..." : "Kirim Pengajuan"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <header>
-        <h1 className="text-3xl font-bold text-foreground">Ruang Absensi (Kepala Sekolah)</h1>
-        <p className="text-foreground/60">Catat kehadiran Anda secara real-time di zona SMK YASDA.</p>
-      </header>
-
-      {message.text && (
-        <div className={`p-4 rounded-xl text-sm font-medium border ${message.type === 'success' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
-          {message.text}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="order-2 lg:order-1 relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary to-green-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 pointer-events-none"></div>
-          <DynamicMap schoolLat={SCHOOL_LAT} schoolLng={SCHOOL_LNG} radiusMeters={RADIUS_METERS}
-            userLat={userLat} userLng={userLng} accuracy={userAccuracy} distance={userDistance} />
-        </div>
-
-        <div className="order-1 lg:order-2 bg-card p-8 rounded-3xl shadow-sm border border-primary/10 text-center relative overflow-hidden flex flex-col justify-center min-h-[350px]">
-          <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent pointer-events-none" />
-          <div className="relative z-10">
-            <div className="mb-6 mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 shadow-[0_0_15px_rgba(92,161,103,0.3)]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Absensi Kepala Sekolah</h2>
-            <p className="text-foreground/60 mb-4 max-w-sm mx-auto text-sm">
-              Sistem mengambil 3 sampel GPS dan memvalidasi lokasi secara ketat (anti-cheat aktif).
-            </p>
-
-            {userLat && (
-              <div className="mb-6 grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-foreground/5 rounded-xl p-2.5">
-                  <div className="text-foreground/50 mb-0.5">Jarak ke Sekolah</div>
-                  <div className={`font-bold font-mono text-sm ${userDistance !== null && userDistance !== undefined && userDistance <= RADIUS_METERS ? 'text-green-500' : 'text-red-500'}`}>
-                    {userDistance !== null && userDistance !== undefined ? `${Math.round(userDistance)}m` : '-'}
-                  </div>
+      <div className={`space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative ${locationError ? 'opacity-0 pointer-events-none' : ''}`}>
+        {permitModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in p-4">
+            <div className="bg-card w-full max-w-md p-6 rounded-2xl shadow-xl border border-primary/20">
+              <h3 className="text-xl font-bold mb-2">Pengajuan {permitModal.type}</h3>
+              <p className="text-foreground/60 text-sm mb-6">Harap masukkan alasan dengan jelas. Data akan direkam ke Kepala Sekolah.</p>
+              <form onSubmit={handlePermitSubmit}>
+                <textarea value={keterangan} onChange={(e) => setKeterangan(e.target.value)}
+                  className="w-full h-32 px-4 py-3 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all mb-4 resize-none"
+                  placeholder={`Masukkan alasan ${permitModal.type}...`} required />
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setPermitModal({ isOpen: false, type: null })}
+                    className="flex-1 px-4 py-2 rounded-xl font-bold bg-foreground/5 text-foreground hover:bg-foreground/10 transition-colors">Batal</button>
+                  <button type="submit" disabled={isSubmittingPermit || !keterangan.trim()}
+                    className={`flex-1 px-4 py-2 rounded-xl font-bold transition-all ${permitModal.type === 'Sakit' ? 'bg-destructive text-white hover:bg-destructive/90' : 'bg-amber-500 text-white hover:bg-amber-600'} disabled:opacity-50`}>
+                    {isSubmittingPermit ? "Memproses..." : "Kirim Pengajuan"}
+                  </button>
                 </div>
-                <div className="bg-foreground/5 rounded-xl p-2.5">
-                  <div className="text-foreground/50 mb-0.5">Akurasi GPS</div>
-                  <div className={`font-bold font-mono text-sm ${!userAccuracy ? 'text-foreground/40' : userAccuracy <= 20 ? 'text-green-500' : userAccuracy <= 50 ? 'text-amber-500' : 'text-red-500'}`}>
-                    {userAccuracy ? `±${Math.round(userAccuracy)}m` : '-'}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {checkInStep && (
-              <div className="mb-4 px-4 py-2 bg-primary/10 rounded-xl text-primary text-xs font-mono animate-pulse">{checkInStep}</div>
-            )}
-
-            <div className="space-y-4">
-              <button onClick={handleCheckIn} disabled={isCheckingIn || hasCheckedInToday}
-                className={`px-8 py-4 w-full md:w-auto min-w-[250px] rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2 mx-auto shadow-lg shadow-primary/20 ${hasCheckedInToday ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed shadow-none border border-foreground/10' : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95 border border-primary'}`}>
-                {isCheckingIn ? (<><svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>MEMVALIDASI GPS...</>) : hasCheckedInToday ? "✅ SUDAH ABSEN HARI INI" : "📍 ABSEN SEKARANG"}
-              </button>
-              <div className="flex items-center justify-center gap-4 pt-2">
-                <button onClick={() => setPermitModal({ isOpen: true, type: "Izin" })} disabled={hasCheckedInToday}
-                  className="px-6 py-2 rounded-full font-bold text-sm bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white border border-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Ajukan Izin</button>
-                <button onClick={() => setPermitModal({ isOpen: true, type: "Sakit" })} disabled={hasCheckedInToday}
-                  className="px-6 py-2 rounded-full font-bold text-sm bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Lapor Sakit</button>
-              </div>
+              </form>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card rounded-2xl shadow-sm border border-primary/10 overflow-hidden mt-12">
-        <div className="p-6 border-b border-primary/5">
-          <h2 className="text-xl font-semibold text-foreground">Riwayat 30 Hari Terakhir</h2>
-        </div>
-        {history.length === 0 ? (
-          <div className="p-8 text-center text-foreground/50">Belum ada riwayat absensi.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-foreground/60 text-sm border-b border-primary/10 bg-primary/5">
-                  <th className="p-4 font-medium">Tanggal</th>
-                  <th className="p-4 font-medium">Jam Masuk</th>
-                  <th className="p-4 font-medium">Status</th>
-                  <th className="p-4 font-medium">Keterangan / Lokasi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-primary/5 text-sm">
-                {history.map((h, i) => (
-                  <tr key={i} className="hover:bg-primary/5 transition-colors">
-                    <td className="p-4 text-foreground font-medium">{new Date(h.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
-                    <td className="p-4 font-mono text-primary">{formatTimeSpan(h.jamMasuk)}</td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${h.status === 'Hadir' ? 'bg-primary/10 text-primary' : h.status === 'Sakit' ? 'bg-destructive/10 text-destructive' : 'bg-amber-500/10 text-amber-500'}`}>{h.status}</span>
-                    </td>
-                    <td className="p-4 text-xs">
-                      {h.keterangan ? (<span className="text-foreground/80 italic">"{h.keterangan}"</span>
-                      ) : h.latitude ? (<span className="font-mono text-foreground/50">{h.latitude.toFixed(5)}, {h.longitude.toFixed(5)}</span>
-                      ) : (<span className="text-foreground/30">-</span>)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         )}
+
+        <header>
+          <h1 className="text-3xl font-bold text-foreground">Ruang Absensi (Kepala Sekolah)</h1>
+          <p className="text-foreground/60">Catat kehadiran Anda secara real-time di zona SMK YASDA.</p>
+        </header>
+
+        {message.text && (
+          <div className={`p-4 rounded-xl text-sm font-medium border ${message.type === 'success' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
+            {message.text}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="order-2 lg:order-1 relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-green-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 pointer-events-none"></div>
+            <DynamicMap schoolLat={SCHOOL_LAT} schoolLng={SCHOOL_LNG} radiusMeters={RADIUS_METERS}
+              userLat={userLat} userLng={userLng} accuracy={userAccuracy} distance={userDistance} />
+          </div>
+
+          <div className="order-1 lg:order-2 bg-card p-8 rounded-3xl shadow-sm border border-primary/10 text-center relative overflow-hidden flex flex-col justify-center min-h-[350px]">
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              <div className="mb-6 mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold mb-2 tracking-tight">Absensi Kepsek</h2>
+              <p className="text-foreground/60 mb-6 max-w-sm mx-auto text-sm leading-relaxed">
+                Sistem tervalidasi menggunakan GPS Anti-Cheat. Pastikan Anda berada dalam radius sekolah.
+              </p>
+
+              {userLat && (
+                <div className="mb-6 grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-foreground/5 rounded-xl p-2.5">
+                    <div className="text-foreground/50 mb-0.5">Jarak ke Sekolah</div>
+                    <div className={`font-bold font-mono text-sm ${userDistance !== null && userDistance !== undefined && userDistance <= RADIUS_METERS ? 'text-green-500' : 'text-red-500'}`}>
+                      {userDistance !== null && userDistance !== undefined ? `${Math.round(userDistance)} m` : '-'}
+                    </div>
+                  </div>
+                  <div className="bg-foreground/5 rounded-xl p-2.5">
+                    <div className="text-foreground/50 mb-0.5">Akurasi GPS</div>
+                    <div className={`font-bold font-mono text-sm ${!userAccuracy ? 'text-foreground/40' : userAccuracy <= 20 ? 'text-green-500' : userAccuracy <= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                      {userAccuracy ? `±${Math.round(userAccuracy)}m` : '-'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {checkInStep && (
+                <div className="mb-4 px-4 py-2 bg-primary/10 rounded-xl text-primary text-xs font-mono animate-pulse">{checkInStep}</div>
+              )}
+
+              <div className="space-y-4">
+                <button onClick={handleCheckIn} disabled={isCheckingIn || hasCheckedInToday}
+                  className={`px-8 py-3.5 w-full md:w-auto min-w-[240px] rounded-2xl font-bold transition-all flex items-center justify-center gap-2 mx-auto ${hasCheckedInToday ? 'bg-foreground/5 text-foreground/40 cursor-not-allowed border border-foreground/10' : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 border border-primary shadow-lg shadow-primary/20'}`}>
+                  {isCheckingIn ? (<><svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>MEMVALIDASI...</>) : hasCheckedInToday ? "SUDAH ABSEN HARI INI" : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5l10 -10"/></svg>
+                      ABSEN SEKARANG
+                    </>
+                  )}
+                </button>
+                <div className="flex items-center justify-center gap-4 pt-2">
+                  <button onClick={() => setPermitModal({ isOpen: true, type: "Izin" })} disabled={hasCheckedInToday}
+                    className="px-6 py-2 rounded-2xl font-bold text-sm bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white border border-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Ajukan Izin</button>
+                  <button onClick={() => setPermitModal({ isOpen: true, type: "Sakit" })} disabled={hasCheckedInToday}
+                    className="px-6 py-2 rounded-2xl font-bold text-sm bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Lapor Sakit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-2xl shadow-sm border border-primary/10 overflow-hidden mt-12">
+          <div className="p-6 border-b border-primary/5">
+            <h2 className="text-xl font-semibold text-foreground">Riwayat 30 Hari Terakhir</h2>
+          </div>
+          {history.length === 0 ? (
+            <div className="p-8 text-center text-foreground/50">Belum ada riwayat absensi.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-foreground/60 text-sm border-b border-primary/10 bg-primary/5">
+                    <th className="p-4 font-medium">Tanggal</th>
+                    <th className="p-4 font-medium">Jam Masuk</th>
+                    <th className="p-4 font-medium">Status</th>
+                    <th className="p-4 font-medium">Keterangan / Lokasi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-primary/5 text-sm">
+                  {history.map((h, i) => (
+                    <tr key={i} className="hover:bg-primary/5 transition-colors">
+                      <td className="p-4 text-foreground font-medium">{new Date(h.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                      <td className="p-4 font-mono text-primary">{formatTimeSpan(h.jamMasuk)}</td>
+                      <td className="p-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${h.status === 'Hadir' ? 'bg-primary/10 text-primary' : h.status === 'Sakit' ? 'bg-destructive/10 text-destructive' : 'bg-amber-500/10 text-amber-500'}`}>{h.status}</span>
+                      </td>
+                      <td className="p-4 text-xs">
+                        {h.keterangan ? (<span className="text-foreground/80 italic">"{h.keterangan}"</span>
+                        ) : h.latitude ? (<span className="font-mono text-foreground/50">{h.latitude.toFixed(5)}, {h.longitude.toFixed(5)}</span>
+                        ) : (<span className="text-foreground/30">-</span>)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 }
