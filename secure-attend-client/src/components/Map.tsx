@@ -112,6 +112,7 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
           </>
         )}
       </MapContainer>
+      </div>
     </div>
   );
 }
