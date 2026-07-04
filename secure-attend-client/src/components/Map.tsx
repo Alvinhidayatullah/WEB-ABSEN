@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMap, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, useMap, Popup, LayersControl } from 'react-leaflet';
+const { BaseLayer } = LayersControl;
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -40,7 +41,8 @@ function FlyToUser({ lat, lng }: { lat: number, lng: number }) {
 }
 
 export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMeters }: MapProps) {
-  // Tema peta gelap CartoDB Dark Matter
+  // Peta terang (default) dan gelap CartoDB
+  const lightMapUrl = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
   const darkMapUrl = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
   
   // Hitung jarak murni di client untuk visualisasi (opsional)
@@ -59,9 +61,14 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
         style={{ height: '100%', width: '100%', backgroundColor: '#0f1411' }}
         attributionControl={false}
       >
-        <TileLayer
-          url={darkMapUrl}
-        />
+        <LayersControl position="topright">
+          <BaseLayer checked name="Peta Terang (Default)">
+            <TileLayer url={lightMapUrl} />
+          </BaseLayer>
+          <BaseLayer name="Peta Gelap (Malam)">
+            <TileLayer url={darkMapUrl} />
+          </BaseLayer>
+        </LayersControl>
         
         {/* Lingkaran Radius Sekolah (Geofence) */}
         <Circle 
