@@ -21,13 +21,33 @@ export default function KepsekEvaluasi() {
     setIsLoading(true);
     setMessage({ type: "", text: "" });
     try {
-      const res = await fetch(`http://localhost:5150/api/attendance/all?month=${month}&year=${year}`, {
-        credentials: "include"
+      const graphqlQuery = {
+        query: `query AllAttendances($month: Int, $year: Int) {
+          allAttendances(month: $month, year: $year) {
+            id tanggal jamMasuk status keterangan
+            user { username nama role }
+          }
+        }`,
+        variables: { month, year }
+      };
+      const res = await fetch("http://localhost:5150/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(graphqlQuery)
       });
       if (res.ok) {
         const json = await res.json();
-        setData(json);
-        setSelectedIds([]);
+        if (json.data && json.data.allAttendances) {
+          const formattedData = json.data.allAttendances.map((a: any) => ({
+            ...a,
+            nama: a.user?.nama,
+            username: a.user?.username,
+            role: a.user?.role
+          }));
+          setData(formattedData);
+          setSelectedIds([]);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -73,18 +93,29 @@ export default function KepsekEvaluasi() {
       }
       setIsDeleting(true);
       try {
-        const res = await fetch(`http://localhost:5150/api/attendance/bulk`, {
-          method: "DELETE",
+        const graphqlQuery = {
+          query: `mutation DeleteBulkData($ids: [Int!]!) {
+            deleteBulkData(ids: $ids) { message success }
+          }`,
+          variables: { ids: selectedIds }
+        };
+        const res = await fetch("http://localhost:5150/graphql", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(selectedIds)
+          body: JSON.stringify(graphqlQuery)
         });
-        const resData = await res.json();
-        if (res.ok) {
-          setMessage({ type: "success", text: resData.message });
-          fetchData(selectedMonth, selectedYear);
-        } else {
-          setMessage({ type: "error", text: resData.message || "Gagal menghapus data." });
+        const json = await res.json();
+        
+        if (json.errors) {
+          setMessage({ type: "error", text: json.errors[0]?.message || "Gagal menghapus data." });
+        } else if (json.data && json.data.deleteBulkData) {
+          if (json.data.deleteBulkData.success) {
+            setMessage({ type: "success", text: json.data.deleteBulkData.message });
+            fetchData(selectedMonth, selectedYear);
+          } else {
+            setMessage({ type: "error", text: json.data.deleteBulkData.message });
+          }
         }
       } catch (err) {
         setMessage({ type: "error", text: "Terjadi kesalahan server saat menghapus." });
@@ -98,17 +129,29 @@ export default function KepsekEvaluasi() {
 
       setIsDeleting(true);
       try {
-        const res = await fetch(`http://localhost:5150/api/attendance/month/${selectedYear}/${selectedMonth}`, {
-          method: "DELETE",
-          credentials: "include"
+        const graphqlQuery = {
+          query: `mutation DeleteMonthlyData($year: Int!, $month: Int!) {
+            deleteMonthlyData(year: $year, month: $month) { message success }
+          }`,
+          variables: { year: selectedYear, month: selectedMonth }
+        };
+        const res = await fetch("http://localhost:5150/graphql", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(graphqlQuery)
         });
-        const resData = await res.json();
+        const json = await res.json();
         
-        if (res.ok) {
-          setMessage({ type: "success", text: resData.message });
-          fetchData(selectedMonth, selectedYear); // Refresh data yang seharusnya kosong
-        } else {
-          setMessage({ type: "error", text: resData.message || "Gagal menghapus data." });
+        if (json.errors) {
+          setMessage({ type: "error", text: json.errors[0]?.message || "Gagal menghapus data." });
+        } else if (json.data && json.data.deleteMonthlyData) {
+          if (json.data.deleteMonthlyData.success) {
+            setMessage({ type: "success", text: json.data.deleteMonthlyData.message });
+            fetchData(selectedMonth, selectedYear); // Refresh data
+          } else {
+            setMessage({ type: "error", text: json.data.deleteMonthlyData.message });
+          }
         }
       } catch (err) {
         setMessage({ type: "error", text: "Terjadi kesalahan server saat menghapus." });

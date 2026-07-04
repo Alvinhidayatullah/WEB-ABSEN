@@ -8,12 +8,18 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("http://localhost:5150/api/attendance/today", {
-          credentials: "include"
+        const graphqlQuery = { query: `query { todayStats { totalGuru hadirHariIni izinSakit } }` };
+        const res = await fetch("http://localhost:5150/graphql", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(graphqlQuery)
         });
         if (res.ok) {
-          const data = await res.json();
-          setStats(data);
+          const json = await res.json();
+          if (json.data && json.data.todayStats) {
+            setStats(json.data.todayStats);
+          }
         }
       } catch (err) {
         console.error("Gagal memuat statistik", err);

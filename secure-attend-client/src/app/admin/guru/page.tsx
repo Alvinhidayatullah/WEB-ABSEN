@@ -14,10 +14,18 @@ export default function KelolaPengguna() {
 
   async function fetchUsers() {
     try {
-      const res = await fetch("http://localhost:5150/api/users", { credentials: "include" });
+      const graphqlQuery = { query: `query { users { id username nama role statusAktif isDeletable } }` };
+      const res = await fetch("http://localhost:5150/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(graphqlQuery)
+      });
       if (res.ok) {
-        const data = await res.json();
-        setUsers(data);
+        const json = await res.json();
+        if (json.data && json.data.users) {
+          setUsers(json.data.users);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -32,19 +40,29 @@ export default function KelolaPengguna() {
     setMessage({ type: "", text: "" });
 
     try {
-      const res = await fetch("http://localhost:5150/api/users", {
+      const graphqlQuery = {
+        query: `mutation CreateUser($username: String!, $nama: String!, $password: String!, $role: String!) {
+          createUser(username: $username, nama: $nama, password: $password, role: $role) { message success }
+        }`,
+        variables: form
+      };
+      const res = await fetch("http://localhost:5150/graphql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(form)
+        body: JSON.stringify(graphqlQuery)
       });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Pengguna berhasil ditambahkan!" });
-        setForm({ username: "", nama: "", password: "", role: "GURU" });
-        fetchUsers();
-      } else {
-        setMessage({ type: "error", text: data.message || "Gagal menambahkan pengguna." });
+      const json = await res.json();
+      if (json.errors) {
+        setMessage({ type: "error", text: json.errors[0]?.message || "Gagal menambahkan pengguna." });
+      } else if (json.data && json.data.createUser) {
+        if (json.data.createUser.success) {
+          setMessage({ type: "success", text: json.data.createUser.message });
+          setForm({ username: "", nama: "", password: "", role: "GURU" });
+          fetchUsers();
+        } else {
+          setMessage({ type: "error", text: json.data.createUser.message });
+        }
       }
     } catch (err) {
       setMessage({ type: "error", text: "Koneksi ke server gagal." });
@@ -59,16 +77,26 @@ export default function KelolaPengguna() {
     }
 
     try {
-      const res = await fetch(`http://localhost:5150/api/users/${id}`, {
-        method: "DELETE",
-        credentials: "include"
+      const graphqlQuery = {
+        query: `mutation DeleteUser($id: Int!) { deleteUser(id: $id) { message success } }`,
+        variables: { id }
+      };
+      const res = await fetch(`http://localhost:5150/graphql`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(graphqlQuery)
       });
-      if (res.ok) {
-        setMessage({ type: "success", text: "Akun berhasil dihapus permanen." });
-        fetchUsers();
-      } else {
-        const data = await res.json();
-        setMessage({ type: "error", text: data.message || "Gagal menghapus akun." });
+      const json = await res.json();
+      if (json.errors) {
+        setMessage({ type: "error", text: json.errors[0]?.message || "Gagal menghapus akun." });
+      } else if (json.data && json.data.deleteUser) {
+        if (json.data.deleteUser.success) {
+          setMessage({ type: "success", text: json.data.deleteUser.message });
+          fetchUsers();
+        } else {
+          setMessage({ type: "error", text: json.data.deleteUser.message });
+        }
       }
     } catch (err) {
       setMessage({ type: "error", text: "Koneksi ke server gagal saat menghapus." });

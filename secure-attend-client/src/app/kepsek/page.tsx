@@ -33,10 +33,20 @@ export default function KepsekDashboard() {
 
   async function fetchHistory() {
     try {
-      const res = await fetch("http://localhost:5150/api/attendance/me", { credentials: "include" });
+      const graphqlQuery = {
+        query: `query { me { tanggal jamMasuk status latitude longitude isMockLocation keterangan } }`
+      };
+      const res = await fetch("http://localhost:5150/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(graphqlQuery)
+      });
       if (res.ok) {
-        const data = await res.json();
-        setHistory(data);
+        const json = await res.json();
+        if (json.data && json.data.me) {
+          setHistory(json.data.me);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -58,24 +68,29 @@ export default function KepsekDashboard() {
         setUserLng(longitude);
 
         try {
-          const res = await fetch("http://localhost:5150/api/attendance/check-in", {
+          const graphqlQuery = {
+            query: `mutation CheckIn($lat: Float, $lng: Float, $isMock: Boolean!) {
+              checkIn(latitude: $lat, longitude: $lng, isMockLocation: $isMock) { message success }
+            }`,
+            variables: { lat: latitude, lng: longitude, isMock: false }
+          };
+          const res = await fetch("http://localhost:5150/graphql", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({
-              latitude,
-              longitude,
-              isMockLocation: false
-            })
+            body: JSON.stringify(graphqlQuery)
           });
-          let data: any = {};
-          try { data = await res.json(); } catch (e) { }
+          const json = await res.json();
 
-          if (res.ok) {
-            setMessage({ type: "success", text: "Absensi berhasil dicatat!" });
-            fetchHistory();
-          } else {
-            setMessage({ type: "error", text: data.message || `Gagal absen (Error ${res.status}).` });
+          if (json.errors) {
+            setMessage({ type: "error", text: json.errors[0]?.message || "Gagal absen." });
+          } else if (json.data && json.data.checkIn) {
+            if (json.data.checkIn.success) {
+              setMessage({ type: "success", text: json.data.checkIn.message });
+              fetchHistory();
+            } else {
+              setMessage({ type: "error", text: json.data.checkIn.message });
+            }
           }
         } catch (err) {
           setMessage({ type: "error", text: "Terjadi kesalahan server saat check-in." });
@@ -103,25 +118,31 @@ export default function KepsekDashboard() {
     setMessage({ type: "", text: "" });
 
     try {
-      const res = await fetch("http://localhost:5150/api/attendance/permit", {
+      const graphqlQuery = {
+        query: `mutation SubmitPermit($status: String!, $keterangan: String!) {
+          submitPermit(status: $status, keterangan: $keterangan) { message success }
+        }`,
+        variables: { status: permitModal.type, keterangan: keterangan }
+      };
+      const res = await fetch("http://localhost:5150/graphql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          status: permitModal.type,
-          keterangan: keterangan
-        })
+        body: JSON.stringify(graphqlQuery)
       });
-      let data: any = {};
-      try { data = await res.json(); } catch (e) { }
+      const json = await res.json();
 
-      if (res.ok) {
-        setMessage({ type: "success", text: `Pengajuan ${permitModal.type} berhasil dicatat!` });
-        setPermitModal({ isOpen: false, type: null });
-        setKeterangan("");
-        fetchHistory();
-      } else {
-        setMessage({ type: "error", text: data.message || `Gagal mengajukan ${permitModal.type} (Error ${res.status}).` });
+      if (json.errors) {
+        setMessage({ type: "error", text: json.errors[0]?.message || `Gagal mengajukan ${permitModal.type}.` });
+      } else if (json.data && json.data.submitPermit) {
+        if (json.data.submitPermit.success) {
+          setMessage({ type: "success", text: json.data.submitPermit.message });
+          setPermitModal({ isOpen: false, type: null });
+          setKeterangan("");
+          fetchHistory();
+        } else {
+          setMessage({ type: "error", text: json.data.submitPermit.message });
+        }
       }
     } catch (err) {
       setMessage({ type: "error", text: "Terjadi kesalahan jaringan/server saat pengajuan." });

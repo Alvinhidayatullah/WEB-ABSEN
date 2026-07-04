@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using SecureAttend.API.Data;
+using SecureAttend.API.GraphQL;
 using System.Threading.RateLimiting;
 using System;
 using System.Linq;
@@ -55,12 +56,16 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor(); // Required for GraphQL to access cookies
 
-// 3. Add services to the container
-builder.Services.AddControllers();
-builder.Services.AddOpenApi(); // .NET 9+ OpenAPI
+// 3. Add GraphQL Server
+builder.Services
+    .AddGraphQLServer()
+    .AddAuthorization()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>();
 
-// 3. Anti-DDoS & Rate Limiting (Token Bucket - 10 request/sec per IP)
+// 4. Anti-DDoS & Rate Limiting (Token Bucket - 10 request/sec per IP)
 builder.Services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
@@ -76,7 +81,7 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = 429;
 });
 
-// 4. CORS untuk Next.js Frontend
+// 5. CORS untuk Next.js Frontend
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
@@ -99,7 +104,7 @@ using (var scope = app.Services.CreateScope())
     DatabaseSeeder.Initialize(services);
 }
 
-// 5. Anti-Scanner Drop Mechanism (HTTP 444)
+// 6. Anti-Scanner Drop Mechanism (HTTP 444)
 app.Use(async (context, next) =>
 {
     var userAgent = context.Request.Headers["User-Agent"].ToString().ToLower();
@@ -115,18 +120,11 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-// app.UseHttpsRedirection(); // Nonaktifkan sementara di localhost untuk menghindari isu CORS
 app.UseCors("FrontendPolicy");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapGraphQL();
 
 app.Run();

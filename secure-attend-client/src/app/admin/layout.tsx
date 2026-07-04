@@ -13,9 +13,11 @@ export default function AdminLayout({
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await fetch("http://localhost:5150/api/auth/logout", {
+      await fetch("http://localhost:5150/graphql", {
         method: "POST",
-        credentials: "include"
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ query: "mutation { logout }" })
       });
       router.push("/");
     } catch (err) {

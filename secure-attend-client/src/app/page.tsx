@@ -17,19 +17,32 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5150/api/auth/login", {
+      const graphqlQuery = {
+        query: `
+          mutation Login($username: String!, $password: String!) {
+            login(username: $username, password: $password) {
+              message
+              user { role }
+            }
+          }
+        `,
+        variables: { username, password }
+      };
+
+      const res = await fetch("http://localhost:5150/graphql", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include", // PENTING: Untuk menerima Set-Cookie dari backend
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(graphqlQuery)
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      const json = await res.json();
+      
+      if (json.errors) {
+        setError(json.errors[0]?.message || "Gagal masuk. Periksa kembali ID dan Kata Sandi.");
+      } else if (json.data && json.data.login) {
         // Berhasil login, arahkan berdasarkan role
-        const role = data.user?.role;
+        const role = json.data.login.user?.role;
         if (role === "SUPER_ADMIN") {
           router.push("/admin");
         } else if (role === "KEPALA_SEKOLAH") {
@@ -38,8 +51,7 @@ export default function Home() {
           router.push("/teacher");
         }
       } else {
-        const data = await res.json();
-        setError(data.message || "Gagal masuk. Periksa kembali ID dan Kata Sandi.");
+        setError("Gagal masuk. Respons tidak valid.");
       }
     } catch (err) {
       setError("Tidak dapat terhubung ke server.");
