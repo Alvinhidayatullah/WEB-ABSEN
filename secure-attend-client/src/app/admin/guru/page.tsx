@@ -15,7 +15,8 @@ export default function KelolaPengguna() {
   async function fetchUsers() {
     try {
       const graphqlQuery = { query: `query { users { id username nama role statusAktif isDeletable } }` };
-      const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -46,7 +47,8 @@ export default function KelolaPengguna() {
         }`,
         variables: form
       };
-      const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -81,7 +83,8 @@ export default function KelolaPengguna() {
         query: `mutation DeleteUser($id: Int!) { deleteUser(id: $id) { message success } }`,
         variables: { id }
       };
-      const res = await fetch(`http://localhost:5150/graphql`, {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

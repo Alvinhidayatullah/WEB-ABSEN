@@ -29,7 +29,8 @@ export default function Home() {
         variables: { username, password }
       };
 
-      const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // PENTING: Untuk menerima Set-Cookie dari backend

@@ -30,7 +30,8 @@ export default function KepsekEvaluasi() {
         }`,
         variables: { month, year }
       };
-      const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -99,7 +100,8 @@ export default function KepsekEvaluasi() {
           }`,
           variables: { ids: selectedIds }
         };
-        const res = await fetch("http://localhost:5150/graphql", {
+  const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -135,7 +137,8 @@ export default function KepsekEvaluasi() {
           }`,
           variables: { year: selectedYear, month: selectedMonth }
         };
-        const res = await fetch("http://localhost:5150/graphql", {
+  const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

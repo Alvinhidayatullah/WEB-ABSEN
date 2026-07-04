@@ -9,7 +9,8 @@ export default function AdminDashboard() {
     async function fetchStats() {
       try {
         const graphqlQuery = { query: `query { todayStats { totalGuru hadirHariIni izinSakit } }` };
-        const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+        const res = await fetch(GRAPHQL_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

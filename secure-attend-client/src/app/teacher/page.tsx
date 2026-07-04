@@ -15,6 +15,16 @@ const SCHOOL_LAT = -7.014843;
 const SCHOOL_LNG = 106.545348;
 const RADIUS_METERS = 300;
 
+function formatTimeSpan(pt: string) {
+  if (!pt) return "-";
+  if (!pt.startsWith('PT')) return pt.substring(0, 5); // Fallback for standard time string
+  const hMatch = pt.match(/(\d+)H/);
+  const mMatch = pt.match(/(\d+)M/);
+  const h = hMatch ? hMatch[1].padStart(2, '0') : '00';
+  const m = mMatch ? mMatch[1].padStart(2, '0') : '00';
+  return `${h}:${m}`;
+}
+
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371e3;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -48,7 +58,7 @@ export default function TeacherDashboard() {
           setUserAccuracy(accuracy);
           setUserDistance(haversineDistance(latitude, longitude, SCHOOL_LAT, SCHOOL_LNG));
         },
-        () => {},
+        () => { },
         { enableHighAccuracy: true, maximumAge: 5000 }
       );
       return () => navigator.geolocation.clearWatch(watchId);
@@ -57,7 +67,8 @@ export default function TeacherDashboard() {
 
   async function fetchHistory() {
     try {
-      const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -162,7 +173,8 @@ export default function TeacherDashboard() {
       setUserAccuracy(accuracy);
       setUserDistance(haversineDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG));
       setCheckInStep("Mengirim ke server untuk verifikasi akhir...");
-      const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -198,7 +210,8 @@ export default function TeacherDashboard() {
     setIsSubmittingPermit(true);
     setMessage({ type: "", text: "" });
     try {
-      const res = await fetch("http://localhost:5150/graphql", {
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+      const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -280,7 +293,7 @@ export default function TeacherDashboard() {
             <div className="mb-6 mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 shadow-[0_0_15px_rgba(92,161,103,0.3)]">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
             </div>
-            <h2 className="text-2xl font-bold mb-2">Validasi SMK YASDA</h2>
+            <h2 className="text-2xl font-bold mb-2">Absensi Guru SMK YASDA</h2>
             <p className="text-foreground/60 mb-4 max-w-sm mx-auto text-sm">
               Sistem mengambil 3 sampel GPS dan memvalidasi lokasi secara ketat (anti-cheat aktif).
             </p>
@@ -309,7 +322,7 @@ export default function TeacherDashboard() {
             <div className="space-y-4">
               <button onClick={handleCheckIn} disabled={isCheckingIn || hasCheckedInToday}
                 className={`px-8 py-4 w-full md:w-auto min-w-[250px] rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2 mx-auto shadow-lg shadow-primary/20 ${hasCheckedInToday ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed shadow-none border border-foreground/10' : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95 border border-primary'}`}>
-                {isCheckingIn ? (<><svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>MEMVALIDASI GPS...</>) : hasCheckedInToday ? "✅ SUDAH ABSEN HARI INI" : "📍 ABSEN SEKARANG"}
+                {isCheckingIn ? (<><svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>MEMVALIDASI GPS...</>) : hasCheckedInToday ? "✅ SUDAH ABSEN HARI INI" : "📍 ABSEN SEKARANG"}
               </button>
               <div className="flex items-center justify-center gap-4 pt-2">
                 <button onClick={() => setPermitModal({ isOpen: true, type: "Izin" })} disabled={hasCheckedInToday}
@@ -343,7 +356,7 @@ export default function TeacherDashboard() {
                 {history.map((h, i) => (
                   <tr key={i} className="hover:bg-primary/5 transition-colors">
                     <td className="p-4 text-foreground font-medium">{new Date(h.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
-                    <td className="p-4 font-mono text-primary">{h.jamMasuk?.substring(0, 5) || "-"}</td>
+                    <td className="p-4 font-mono text-primary">{formatTimeSpan(h.jamMasuk)}</td>
                     <td className="p-4">
                       <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${h.status === 'Hadir' ? 'bg-primary/10 text-primary' : h.status === 'Sakit' ? 'bg-destructive/10 text-destructive' : 'bg-amber-500/10 text-amber-500'}`}>{h.status}</span>
                     </td>
