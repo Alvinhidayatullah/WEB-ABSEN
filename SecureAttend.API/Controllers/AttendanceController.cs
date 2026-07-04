@@ -45,7 +45,7 @@ namespace SecureAttend.API.Controllers
 
         // POST: api/attendance/check-in
         [HttpPost("check-in")]
-        [Authorize(Roles = "GURU")]
+        [Authorize(Roles = "GURU,KEPALA_SEKOLAH")]
         public async Task<IActionResult> CheckIn([FromBody] CheckInRequest req)
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -102,7 +102,7 @@ namespace SecureAttend.API.Controllers
 
         // GET: api/attendance/me
         [HttpGet("me")]
-        [Authorize(Roles = "GURU")]
+        [Authorize(Roles = "GURU,KEPALA_SEKOLAH")]
         public async Task<IActionResult> GetMyAttendance()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
