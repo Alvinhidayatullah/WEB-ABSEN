@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMap, Popup, LayersControl } from 'react-leaflet';
-const { BaseLayer } = LayersControl;
+import { MapContainer, TileLayer, Marker, Circle, useMap, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -41,6 +40,8 @@ function FlyToUser({ lat, lng }: { lat: number, lng: number }) {
 }
 
 export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMeters }: MapProps) {
+  const [mapTheme, setMapTheme] = useState<'light' | 'dark'>('light');
+
   // Peta terang (default) dan gelap CartoDB
   const lightMapUrl = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
   const darkMapUrl = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
@@ -54,21 +55,22 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
   }
 
   return (
-    <div className="w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl shadow-primary/5 relative z-10">
+    <div className="w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl shadow-primary/5 relative z-10 group">
+      {/* Custom Theme Toggle Button */}
+      <button 
+        onClick={() => setMapTheme(prev => prev === 'light' ? 'dark' : 'light')}
+        className="absolute top-4 right-4 z-[400] bg-white/90 backdrop-blur-sm text-slate-800 p-2 px-4 rounded-lg shadow-lg text-xs font-bold border border-slate-200 hover:bg-white transition-all flex items-center gap-2"
+      >
+        {mapTheme === 'light' ? '🌙 Mode Gelap' : '☀️ Mode Terang'}
+      </button>
+
       <MapContainer 
         center={[schoolLat, schoolLng]} 
         zoom={17} 
-        style={{ height: '100%', width: '100%', backgroundColor: '#0f1411' }}
+        style={{ height: '100%', width: '100%', backgroundColor: mapTheme === 'dark' ? '#0f1411' : '#f5f5f5' }}
         attributionControl={false}
       >
-        <LayersControl position="topright">
-          <BaseLayer checked name="Peta Terang (Default)">
-            <TileLayer url={lightMapUrl} />
-          </BaseLayer>
-          <BaseLayer name="Peta Gelap (Malam)">
-            <TileLayer url={darkMapUrl} />
-          </BaseLayer>
-        </LayersControl>
+        <TileLayer url={mapTheme === 'light' ? lightMapUrl : darkMapUrl} />
         
         {/* Lingkaran Radius Sekolah (Geofence) */}
         <Circle 
