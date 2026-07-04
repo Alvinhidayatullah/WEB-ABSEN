@@ -1,0 +1,6 @@
+[build]
+builder = "nixpacks"
+watchPatterns = ["SecureAttend.API/**"]
+
+[build.nixpacksPlan.variables]
+NIXPACKS_PROJECT_DIR = "SecureAttend.API"
