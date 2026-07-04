@@ -86,7 +86,7 @@ namespace SecureAttend.API.Controllers
             {
                 UserId = userId,
                 Tanggal = today,
-                JamMasuk = wibTime.TimeOfDay,
+                JamMasuk = new TimeSpan(wibTime.Hour, wibTime.Minute, wibTime.Second),
                 Status = "Hadir", // Bisa dilogika 'Terlambat' jika > jam tertentu
                 Latitude = req.Latitude,
                 Longitude = req.Longitude,
@@ -170,7 +170,7 @@ namespace SecureAttend.API.Controllers
             {
                 UserId = userId,
                 Tanggal = today,
-                JamMasuk = wibTime.TimeOfDay,
+                JamMasuk = new TimeSpan(wibTime.Hour, wibTime.Minute, wibTime.Second),
                 Status = req.Status,
                 Keterangan = req.Keterangan,
                 IP_Address = HttpContext.Connection.RemoteIpAddress?.ToString()
@@ -202,7 +202,7 @@ namespace SecureAttend.API.Controllers
                     Nama = a.User.Nama,
                     Role = a.User.Role,
                     a.Tanggal,
-                    JamMasuk = a.JamMasuk.HasValue ? a.JamMasuk.Value.ToString(@"hh\:mm") : null,
+                    JamMasuk = a.JamMasuk.HasValue ? a.JamMasuk.Value.ToString(@"hh\:mm\:ss") : null,
                     a.Status,
                     a.Keterangan
                 })
