@@ -55,26 +55,25 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
   }
 
   return (
-    <div className="w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl shadow-primary/5 relative z-10 group">
-      {/* Custom Theme Toggle Button */}
-      <button 
-        onClick={() => setMapTheme(prev => prev === 'light' ? 'dark' : 'light')}
-        className="absolute top-4 right-4 z-[400] p-2 px-4 rounded-lg shadow-xl text-xs font-bold transition-transform active:scale-95 flex items-center gap-2 border border-transparent"
-        style={{
-          backgroundColor: mapTheme === 'light' ? '#000000' : '#ffffff',
-          color: mapTheme === 'light' ? '#ffffff' : '#000000',
-        }}
-      >
-        {mapTheme === 'light' ? '🌙 Mode Gelap' : '☀️ Mode Terang'}
-      </button>
+    <div className="flex flex-col gap-3 w-full">
+      {/* Tombol diletakkan di luar area peta agar lebih jelas dan tidak mengganggu */}
+      <div className="flex justify-end w-full">
+        <button 
+          onClick={() => setMapTheme(prev => prev === 'light' ? 'dark' : 'light')}
+          className="px-4 py-2 rounded-xl shadow-sm text-sm font-bold transition-transform active:scale-95 flex items-center gap-2 border border-primary/20 bg-card hover:bg-primary/10 text-foreground"
+        >
+          {mapTheme === 'light' ? '🌙 Gunakan Peta Gelap' : '☀️ Gunakan Peta Terang'}
+        </button>
+      </div>
 
-      <MapContainer 
-        center={[schoolLat, schoolLng]} 
-        zoom={17} 
-        style={{ height: '100%', width: '100%', backgroundColor: mapTheme === 'dark' ? '#0f1411' : '#f5f5f5' }}
-        attributionControl={false}
-      >
-        <TileLayer url={mapTheme === 'light' ? lightMapUrl : darkMapUrl} />
+      <div className="w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl shadow-primary/5 relative z-10">
+        <MapContainer 
+          center={[schoolLat, schoolLng]} 
+          zoom={17} 
+          style={{ height: '100%', width: '100%', backgroundColor: mapTheme === 'dark' ? '#0f1411' : '#f5f5f5' }}
+          attributionControl={false}
+        >
+          <TileLayer url={mapTheme === 'light' ? lightMapUrl : darkMapUrl} />
         
         {/* Lingkaran Radius Sekolah (Geofence) */}
         <Circle 
