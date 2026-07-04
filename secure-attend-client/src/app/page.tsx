@@ -51,21 +51,38 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
       <div className="w-full max-w-sm space-y-8">
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary/20 text-primary rounded-2xl flex items-center justify-center mb-4 border border-primary/30">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+          <div className="relative mx-auto w-24 h-24 mb-8">
+            {/* Ambient Glow */}
+            <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full animate-pulse"></div>
+            {/* Glassmorphic Container */}
+            <div className="relative w-full h-full bg-gradient-to-br from-card to-background rounded-[2rem] border border-primary/20 flex items-center justify-center shadow-[0_0_40px_-10px_rgba(75,127,82,0.4)] overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+              {/* Abstract Geo-Eco Logo */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-primary relative z-10 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_15px_rgba(75,127,82,0.6)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" className="stroke-primary/30" />
+                <path d="M3.27 6.96 12 12l8.73-5.04" className="stroke-primary/30" />
+                <path d="M12 22V12" className="stroke-primary/30" />
+                <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="3" className="stroke-primary" />
+              </svg>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            RuangHadir
+          
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 font-sans">
+            <span className="text-foreground">Ruang</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary via-emerald-400 to-cyan-500 drop-shadow-[0_0_15px_rgba(75,127,82,0.2)]">Hadir</span>
           </h1>
-          <p className="text-sm text-foreground/60 mt-2">
-            Ruang khusus dan aman bagi guru untuk memulai hari
-          </p>
-        </div>
+          
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-[1px] w-8 bg-gradient-to-r from-transparent to-primary/50"></div>
+            <p className="text-xs md:text-sm font-mono text-foreground/70 uppercase tracking-widest text-center">
+              Ruang Khusus & Aman Bagi Guru
+            </p>
+            <div className="h-[1px] w-8 bg-gradient-to-l from-transparent to-primary/50"></div>
+          </div>
 
         <div className="bg-card p-6 rounded-2xl shadow-lg shadow-primary/5 border border-primary/10">
           <form className="space-y-4" onSubmit={handleLogin}>
-            
+
             {error && (
               <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
                 {error}
@@ -74,19 +91,19 @@ export default function Home() {
 
             <div className="space-y-2">
               <label htmlFor="nip" className="block text-sm font-medium text-foreground/80">
-                NIP / ID Pengguna
+                NIP / Username
               </label>
               <input
                 id="nip"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Masukkan NIP atau ID"
+                placeholder="Masukkan NIP atau Username"
                 className="w-full px-4 py-3 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="pin" className="block text-sm font-medium text-foreground/80">
                 Kata Sandi
@@ -101,15 +118,15 @@ export default function Home() {
                   className="w-full px-4 py-3 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-12"
                   required
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-primary transition-colors"
                 >
                   {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><line x1="2" x2="22" y1="2" y2="22" /></svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
                   )}
                 </button>
               </div>
@@ -122,7 +139,7 @@ export default function Home() {
                 className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-transform active:scale-[0.98] shadow-md shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span>{isLoading ? "MEMPROSES..." : "MASUK"}</span>
-                {!isLoading && <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>}
+                {!isLoading && <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>}
               </button>
             </div>
           </form>

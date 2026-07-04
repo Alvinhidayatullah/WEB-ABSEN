@@ -30,8 +30,11 @@ export default function KepsekLayout({
       <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-primary/10 flex flex-col p-4 md:p-6 shadow-sm z-20 sticky top-0 md:h-screen overflow-hidden">
         <div className="flex-1 flex flex-col gap-4 w-full">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-primary">RuangHadir</h2>
-            <p className="hidden md:block text-xs text-foreground/50 mb-8 font-mono">PORTAL KEPSEK</p>
+            <h2 className="text-xl md:text-2xl font-black tracking-tighter">
+              <span className="text-foreground">Ruang</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary to-emerald-400">Hadir</span>
+            </h2>
+            <p className="hidden md:block text-[10px] text-foreground/40 mt-1 font-mono tracking-widest uppercase">Portal Kepsek</p>
           </div>
           
           <nav className="flex flex-row md:flex-col space-x-2 md:space-x-0 md:space-y-2 overflow-x-auto w-full pb-2 md:pb-0 scrollbar-hide">
