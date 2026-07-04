@@ -78,7 +78,7 @@ namespace SecureAttend.API.GraphQL
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(3)
             });
 
@@ -91,7 +91,7 @@ namespace SecureAttend.API.GraphQL
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict
+                SameSite = SameSiteMode.None
             });
             return "Berhasil keluar.";
         }
