@@ -230,6 +230,31 @@ namespace SecureAttend.API.Controllers
 
             return Ok(new { message = $"{oldData.Count} data absensi berhasil dihapus untuk menghemat storage." });
         }
+
+        // DELETE: api/attendance/bulk
+        [HttpDelete("bulk")]
+        [Authorize(Roles = "SUPER_ADMIN,KEPALA_SEKOLAH")]
+        public async Task<IActionResult> DeleteBulkData([FromBody] List<int> ids)
+        {
+            if (ids == null || !ids.Any())
+            {
+                return BadRequest(new { message = "Tidak ada data yang dipilih." });
+            }
+
+            var targetData = await _context.Attendances
+                .Where(a => ids.Contains(a.Id))
+                .ToListAsync();
+
+            if (!targetData.Any())
+            {
+                return NotFound(new { message = "Data tidak ditemukan." });
+            }
+
+            _context.Attendances.RemoveRange(targetData);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"{targetData.Count} data berhasil dihapus terpilih." });
+        }
     }
 
     public class CheckInRequest

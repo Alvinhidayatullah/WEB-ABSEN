@@ -11,6 +11,7 @@ export default function KepsekEvaluasi() {
 
   const [message, setMessage] = useState({ type: "", text: "" });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetchData(selectedMonth, selectedYear);
@@ -26,6 +27,7 @@ export default function KepsekEvaluasi() {
       if (res.ok) {
         const json = await res.json();
         setData(json);
+        setSelectedIds([]);
       }
     } catch (err) {
       console.error(err);
@@ -63,30 +65,70 @@ export default function KepsekEvaluasi() {
   };
 
   // Hapus Data (Storage Optimization)
-  const handleDeleteMonth = async () => {
-    if (!window.confirm(`PERINGATAN BAHAYA!\n\nAnda yakin ingin MENGHAPUS SEMUA DATA absensi pada bulan ${selectedMonth} tahun ${selectedYear} secara permanen?\n\nTindakan ini biasanya hanya dilakukan untuk menghemat ruang penyimpanan. Pastikan Anda sudah mengunduh (Export) datanya terlebih dahulu!`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      const res = await fetch(`http://localhost:5150/api/attendance/month/${selectedYear}/${selectedMonth}`, {
-        method: "DELETE",
-        credentials: "include"
-      });
-      const resData = await res.json();
-      
-      if (res.ok) {
-        setMessage({ type: "success", text: resData.message });
-        fetchData(selectedMonth, selectedYear); // Refresh data yang seharusnya kosong
-      } else {
-        setMessage({ type: "error", text: resData.message || "Gagal menghapus data." });
+  const handleDeleteData = async () => {
+    if (selectedIds.length > 0) {
+      if (!window.confirm(`Anda yakin ingin menghapus ${selectedIds.length} data absensi yang dipilih?`)) {
+        return;
       }
-    } catch (err) {
-      setMessage({ type: "error", text: "Terjadi kesalahan server saat menghapus." });
-    } finally {
-      setIsDeleting(false);
+      setIsDeleting(true);
+      try {
+        const res = await fetch(`http://localhost:5150/api/attendance/bulk`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(selectedIds)
+        });
+        const resData = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: resData.message });
+          fetchData(selectedMonth, selectedYear);
+        } else {
+          setMessage({ type: "error", text: resData.message || "Gagal menghapus data." });
+        }
+      } catch (err) {
+        setMessage({ type: "error", text: "Terjadi kesalahan server saat menghapus." });
+      } finally {
+        setIsDeleting(false);
+      }
+    } else {
+      if (!window.confirm(`PERINGATAN BAHAYA!\n\nAnda yakin ingin MENGHAPUS SEMUA DATA absensi pada bulan ${selectedMonth} tahun ${selectedYear} secara permanen?\n\nTindakan ini biasanya hanya dilakukan untuk menghemat ruang penyimpanan. Pastikan Anda sudah mengunduh (Export) datanya terlebih dahulu!`)) {
+        return;
+      }
+
+      setIsDeleting(true);
+      try {
+        const res = await fetch(`http://localhost:5150/api/attendance/month/${selectedYear}/${selectedMonth}`, {
+          method: "DELETE",
+          credentials: "include"
+        });
+        const resData = await res.json();
+        
+        if (res.ok) {
+          setMessage({ type: "success", text: resData.message });
+          fetchData(selectedMonth, selectedYear); // Refresh data yang seharusnya kosong
+        } else {
+          setMessage({ type: "error", text: resData.message || "Gagal menghapus data." });
+        }
+      } catch (err) {
+        setMessage({ type: "error", text: "Terjadi kesalahan server saat menghapus." });
+      } finally {
+        setIsDeleting(false);
+      }
     }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(data.map(d => d.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -109,13 +151,13 @@ export default function KepsekEvaluasi() {
           </button>
           
           <button
-            onClick={handleDeleteMonth}
-            disabled={isDeleting || data.length === 0}
+            onClick={handleDeleteData}
+            disabled={isDeleting || (data.length === 0 && selectedIds.length === 0)}
             suppressHydrationWarning
             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-            {isDeleting ? "Menghapus..." : "Bersihkan"}
+            {isDeleting ? "Menghapus..." : selectedIds.length > 0 ? `Hapus ${selectedIds.length} Data` : "Bersihkan"}
           </button>
         </div>
       </header>
@@ -181,6 +223,14 @@ export default function KepsekEvaluasi() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-foreground/60 text-sm border-b border-primary/10">
+                  <th className="p-4 font-medium w-12">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-primary/30 text-primary focus:ring-primary/50"
+                      checked={data.length > 0 && selectedIds.length === data.length}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   <th className="p-4 font-medium whitespace-nowrap">Tanggal</th>
                   <th className="p-4 font-medium whitespace-nowrap">Nama & ID</th>
                   <th className="p-4 font-medium whitespace-nowrap">Status</th>
@@ -190,6 +240,14 @@ export default function KepsekEvaluasi() {
               <tbody className="divide-y divide-primary/5 text-sm">
                 {data.map((row, i) => (
                   <tr key={i} className="hover:bg-primary/5 transition-colors">
+                    <td className="p-4">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-primary/30 text-primary focus:ring-primary/50"
+                        checked={selectedIds.includes(row.id)}
+                        onChange={() => handleSelectRow(row.id)}
+                      />
+                    </td>
                     <td className="p-4 font-mono text-primary whitespace-nowrap">
                       {row.tanggal.split('T')[0]}
                     </td>
