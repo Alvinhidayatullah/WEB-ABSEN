@@ -86,7 +86,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // Sesuai default Next.js
+        policy.WithOrigins("http://localhost:3000", "https://ruang-hadir-eight.vercel.app") // Local & Vercel
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
