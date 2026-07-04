@@ -1,74 +1,67 @@
 # PRODUCT REQUIREMENTS DOCUMENT (PRD)
-**Project Name:** SecureAttend (Sistem Absensi Guru Terpadu)
-**Version:** 2.0.0 (Eco-Cyber Security & Active Defense Edition)
+**Project Name:** RuangHadir (Sistem Absensi Guru Terpadu)
+**Version:** 2.1.0 (Eco-Cyber Security & Active Defense Edition)
 **Vendor/Architecture Standard:** Elite Sentinel Cybercorp
 
 ## 1. Ringkasan Eksekutif (Executive Summary)
-SecureAttend adalah aplikasi Absensi Guru berbasis web modern yang dibangun dengan arsitektur "Zero-Trust" dan kepatuhan penuh terhadap standar keamanan OWASP Top-10. Dirancang pertama kali untuk SMK Pertanian (namun sangat skalabel untuk diadopsi oleh sekolah lain), sistem ini menggabungkan tema visual yang santai dan natural dengan mesin keamanan kelas militer. Sistem menjamin keakuratan data presensi melalui validasi lokasi absolut, dilengkapi mekanisme *Active Defense* untuk memblokir intrusi peretasan otomatis, sambil tetap memberikan pengalaman antarmuka yang sangat responsif, elegan, dan ringan di berbagai perangkat.
+RuangHadir (sebelumnya bernama SecureAttend) adalah aplikasi Absensi Guru berbasis web modern yang dibangun dengan arsitektur "Zero-Trust" dan kepatuhan penuh terhadap standar keamanan OWASP Top-10. Dirancang pertama kali untuk SMK Pertanian (namun sangat skalabel untuk diadopsi oleh sekolah lain), sistem ini menggabungkan tema visual yang santai dan natural dengan mesin keamanan kelas militer. Sistem menjamin keakuratan data presensi melalui validasi lokasi absolut, dilengkapi mekanisme *Active Defense* untuk memblokir intrusi peretasan otomatis, sambil tetap memberikan pengalaman antarmuka yang sangat responsif, elegan, dan ringan di berbagai perangkat.
 
 ## 2. Arsitektur & Teknologi (Tech Stack)
 Aplikasi menggunakan arsitektur *Separated Fullstack* (*Decoupled*) untuk isolasi jaringan maksimum dan performa tinggi:
 * **Frontend:** Next.js 15.3 (App Router), React 19, Tailwind CSS v4. Di-*hosting* di Vercel Edge Network dengan proteksi Anti-DDoS lapis pertama.
-* **Backend:** .NET 9 Web API (C#). Di-*hosting* di *cloud* tertutup yang hanya menerima lalu lintas dari *frontend*. Sistem tipe statisnya imun terhadap banyak celah keamanan memori.
+* **Backend:** .NET 9 Web API (C#) dengan namespace inti `SecureAttend.API`. Di-*hosting* di *cloud* tertutup yang hanya menerima lalu lintas dari *frontend*. Sistem tipe statisnya imun terhadap banyak celah keamanan memori.
 * **Database & ORM:** PostgreSQL dengan Entity Framework Core (EF Core) v9.
-* **Keamanan Akses & Identitas:** JWT tersimpan di *Secure HttpOnly Cookies*, rotasi *Refresh Token*, dan ASP.NET Core Identity.
-* **Utilitas:** ClosedXML / EPPlus (.NET) untuk kalkulasi dan ekspor laporan absensi ke Excel.
+* **Keamanan Akses & Identitas:** JWT tersimpan di *Secure HttpOnly Cookies* (`RuangHadir_Session`), rotasi *Refresh Token*, dan ASP.NET Core Identity.
+* **Utilitas:** SheetJS / XLSX untuk ekspor laporan absensi (Evaluasi) ke Excel langsung dari sisi klien (Browser).
 
 ## 3. Spesifikasi UI/UX & Desain Estetika (Eco-Tech Theme)
 Antarmuka dirancang fungsional, estetik, dan nyaman di mata untuk penggunaan harian:
-* **Mobile-First Responsive (No Letterboxing):** Tata letak dibangun presisi pada rasio 720x1560 piksel dengan konfigurasi skala *viewport* absolut. Sidebar *desktop* otomatis bertransisi menjadi navigasi bar *scrollable* horizontal (`flex-col` to `flex-row` di navigasi) di bagian bawah/atas pada tampilan *mobile* (seperti iPhone dan Android) demi menghilangkan efek sempit (*letterboxing*) dan memperluas visibilitas data.
-* **Elemen Visual Santai & Keren:** Mengusung palet warna hijau yang santai (*sage green* atau *emerald* redup) yang tidak memaksa mata, cocok dengan identitas SMK Pertanian namun tetap elegan untuk instansi lain. Dipadukan dengan mode gelap (*clean dark mode*) atau mode terang yang lembut. Tombol navigasi dibuat lugas dan besar (misal: "KEMBALI", "ABSEN SEKARANG").
-* **Halaman 403 Forbidden yang Elegan:** Jika pengguna mencoba meraba URL terlarang (`/admin`, `/config`), sistem menampilkan halaman 403 yang estetik namun intimidatif. Latar belakang hijau gelap berpadu hitam, tipografi bersih bertuliskan "ACCESS DENIED - ANOMALY DETECTED", disertai efek *glitch* digital halus dan hitung mundur otomatis sebelum dikembalikan ke halaman *login*.
+* **Mobile-First Responsive (No Letterboxing):** Tata letak dibangun presisi pada rasio 720x1560 piksel dengan konfigurasi skala *viewport* absolut. Sidebar *desktop* otomatis bertransisi menjadi navigasi bar *scrollable* horizontal di bagian bawah/atas pada tampilan *mobile* demi kenyamanan pengguna gawai.
+* **Elemen Visual Santai & Keren:** Mengusung palet warna hijau yang santai (*sage green* atau *emerald* redup) yang dipadukan dengan *Glassmorphism*. Identitas merek telah sepenuhnya bertransisi menjadi **RuangHadir** dengan ikonografi khas.
+* **Halaman 403 Forbidden yang Elegan:** Menolak akses ilegal dengan antarmuka estetik namun intimidatif bergaya *glitch* digital.
+* **Dashboard Role-Based:** Pengalaman antarmuka disesuaikan secara dinamis untuk masing-masing tipe akun (Guru, Kepala Sekolah, Admin) tanpa memuat elemen yang tidak perlu.
 
 ## 4. Standar Keamanan OWASP Top-10 & Active Defense
-* **Sesi JWT & Anti-Cookie Injection (3 Hari):** Mengurangi resiko injeksi cookie menggunakan *Secure HttpOnly Cookies* dengan perlindungan *SameSite* yang masa hidupnya diperpanjang secara mutlak menjadi 3 hari demi kenyamanan staf guru.
-* **Broken Access Control (BAC) Strict Enforcement:** Validasi ganda (Frontend & Backend). Fungsi pembuatan pengguna (`CreateUser`) mutlak dijaga oleh anotasi *Roles* C# untuk menolak permohonan ilegal. Operasi *Update Profile* menggunakan arsitektur *Strongly-Typed Model Binding* yang secara alami memiliki **0% kemungkinan Mass Assignment IDOR** (seorang Guru tidak mungkin bisa menginjeksi JSON untuk menyulap jabatannya menjadi *Super Admin*).
-* **Injection (SQLi & Command Injection):** Entity Framework Core menggunakan *Parameterized Queries* murni. *Payload* injeksi kutip tunggal (`' OR 1=1--`) otomatis dinetralisir menjadi teks biasa.
-* **Cross-Site Scripting (XSS):** React 19 melakukan *escape* pada semua *output*. *Backend* menerapkan *Content-Security-Policy (CSP)* ketat untuk menolak eksekusi skrip eksternal.
-* **XML External Entities (XXE):** *Backend* .NET hanya menerima *payload* JSON, memblokir penguraian (*parsing*) XML secara total.
-* **Anti-Scanner Drop Mechanism:** Middleware .NET menganalisis *Header* HTTP. Jika terdeteksi *User-Agent* dari Burp Suite, ZAP, atau SQLMap, server tidak membalas dengan pesan *error*, melainkan langsung memutus koneksi (HTTP 444 *No Response*), membuat *scanner* menjadi *timeout*.
-* **Anti-DDoS & Rate Limiting:** Vercel Edge Cache menyerap lonjakan trafik awal. *Backend* menggunakan algoritma *Token Bucket* (maksimal 10 *request*/detik per IP), memicu blokir IP sementara jika dilanggar.
-* **Payload Anomaly Detection:** Menolak *request* dengan *body* terlalu besar atau berisi karakter eksotis (*fuzzing*).
+* **Sesi JWT & Anti-Cookie Injection (3 Hari):** Menggunakan *Secure HttpOnly Cookies* (`RuangHadir_Session`) yang kebal terhadap manipulasi sisi klien (XSS).
+* **Broken Access Control (BAC) Strict Enforcement:** Validasi ganda mutlak (Frontend & Backend). Aksi krusial (seperti membuat pengguna) dibatasi ketat untuk `SUPER_ADMIN`.
+* **Injection (SQLi & Command Injection):** Murni mengandalkan *Parameterized Queries* dari EF Core yang menetralisir semua percobaan SQL Injection.
+* **Cross-Site Scripting (XSS):** React 19 secara otomatis melakukan *escape* pada semua *output*.
+* **Anti-Scanner Drop Mechanism:** Middleware .NET memutus koneksi (HTTP 444 *No Response*) secara instan jika mendeteksi *User-Agent* dari perangkat *scanner* peretas otomatis (Burp, ZAP, SQLMap).
+* **Anti-DDoS & Rate Limiting:** Mengimplementasikan algoritma *Token Bucket* (maksimal 10 *request*/detik per IP) untuk membendung lonjakan trafik anomali.
 
-## 5. Fitur Anti-Kecurangan Absensi (Anti-Fraud) & RBAC
-* **SUPER_ADMIN, KEPALA_SEKOLAH, GURU:** Pemisahan hak akses ketat sesuai tupoksi masing-masing.
-* **Waktu Mutlak Global Server (UTC+7 WIB):** Backend dan Frontend memiliki logika sinkronisasi kalkulasi yang memaksa seluruh catatan kehadiran dikunci pada zona waktu Waktu Indonesia Barat (WIB). Pergantian batas hari pasti terjadi persis pada 00:00 WIB, menangkal bug *timezone* di perangkat staf yang kebetulan sedang berada di WITA atau WIT.
-* **Strict Geofencing Radius Check:** Kalkulasi jarak kordinat dilakukan murni di *server-side* (.NET) menggunakan rumus *Haversine*.
-* **Mock GPS / Fake Location Detection:** Validasi anomali *payload* Geolocation API untuk memblokir aplikasi pemalsu lokasi.
-* **Validasi Wajib Izin & Sakit:** Saat mengirim laporan Izin / Lapor Sakit, alasan/keterangan menjadi syarat mutlak wajib diisi dengan validasi dua lapis (*frontend text required* dan *backend HTTP 400 Bad Request* rejection jika kosong).
-* **Hardware Binding (Device Fingerprinting):** Mengunci kombinasi akun guru dengan `DeviceID` fisik saat login pertama. Mencegah praktik titip absen dari HP lain.
+## 5. Fitur Fungsional Inti & Anti-Kecurangan
+* **Role-Based Access Control (RBAC):** Pemisahan hak akses antara SUPER_ADMIN, KEPALA_SEKOLAH, dan GURU. Kepala Sekolah memiliki wewenang untuk mengevaluasi data bulanan seluruh staf sekaligus memiliki akses untuk melakukan check-in mandiri.
+* **Waktu Mutlak Global Server (UTC+7 WIB):** Pencatatan Jam Masuk dilakukan 100% menggunakan kapabilitas *TimeOfDay* milik *server backend* hingga tingkat detik (hh:mm:ss). Ini mencegah modifikasi waktu lokal pada gawai pengguna.
+* **Strict Geofencing Radius Check:** Kalkulasi jarak menggunakan rumus *Haversine* secara *server-side*.
+* **Mock GPS / Fake Location Detection:** Validasi atribut *payload* GPS untuk memblokir indikasi Lokasi Palsu secara langsung.
+* **Manajemen Izin & Sakit Tervalidasi:** Wajib menyertakan keterangan otentik yang akan tersimpan bersamaan dengan waktu (Jam) diajukannya izin tersebut.
+* **Evaluasi & Optimisasi Data (Fitur Kepala Sekolah):**
+  - **Ekspor Excel Pintar:** Mampu menghasilkan laporan absensi berbentuk `.xlsx` yang terstruktur rapi (kolom Jam Masuk dan Keterangan terpisah secara sistematis).
+  - **Bulk Delete Selektif & Masif:** Kepala Sekolah memiliki modul khusus (Storage Optimization) untuk menghapus riwayat kehadiran tertentu secara spesifik melalui *checkbox*, atau membersihkan data keseluruhan dalam rentang satu bulan demi menghemat kapasitas pangkalan data.
 
-## 6. Struktur Direktori Utama (Monorepo / Dual-Repository)
+## 6. Struktur Direktori Utama (Monorepo)
 **a. Client-Side (Next.js Frontend)**
 secure-attend-client/
 ├── src/
 │   ├── app/                    # Routing Portal Absensi (Next.js App Router)
-│   │   ├── admin/              # Panel SUPER_ADMIN
-│   │   ├── kepsek/             # Panel KEPALA_SEKOLAH 
-│   │   ├── teacher/            # Portal khusus GURU
-│   │   └── 403/                # Halaman Access Denied Estetik
+│   │   ├── admin/              # Panel Manajemen Terpusat (SUPER_ADMIN)
+│   │   ├── kepsek/             # Portal KEPALA_SEKOLAH (Evaluasi Bulanan & Panel Absensi)
+│   │   ├── teacher/            # Portal Khusus GURU
+│   │   └── 403/                # Halaman Access Denied
 │   ├── components/             # Komponen UI (Tailwind V4, Lucide)
-│   ├── services/               # API Fetcher (Axios/Fetch + Interceptor)
-│   └── middleware.ts           # Route Guarding
+│   └── middleware.ts           # Route Guarding & Auth Checks
 
 **b. Server-Side (.NET 9 Web API Backend)**
 SecureAttend.API/
-├── Controllers/                # REST API (HTTPS Only)
+├── Controllers/                # Endpoint REST API Terpusat
 │   ├── AuthController.cs       
-│   ├── AttendanceController.cs 
-│   └── ReportController.cs     
+│   ├── AttendanceController.cs # Mengelola Check-In, Geolocation, Bulk Delete
+│   └── UsersController.cs      # Manajemen Master Data Staf
 ├── Data/                       
-│   └── ApplicationDbContext.cs # EF Core & PostgreSQL
-├── Models/                     # Entity Data Model
-├── Services/                   
-│   ├── GeoValidationService.cs # Kalkulasi Geofencing & Mock GPS
-│   └── TokenService.cs         # Generasi JWT
-├── Program.cs                  # WAF, CORS, Rate Limiting
-└── appsettings.json            # Vault Rahasia
+│   └── ApplicationDbContext.cs # EF Core & PostgreSQL Integrator
+├── Models/                     # Schema Data Internal
+├── Program.cs                  # Injeksi WAF, CORS, Rate Limiting
 
 ## 7. Model Data (Struktur Database PostgreSQL)
-Berfungsi sebagai *Immutable Ledger* (Buku Besar Permanen):
-* **Users:** `ID`, `NIP`, `Nama`, `PasswordHash`, `Role`, `DeviceID`, `StatusAktif`.
-* **Attendances:** `ID`, `UserId`, `Tanggal`, `JamMasuk`, `JamPulang`, `Status`, `Latitude`, `Longitude`, `IsMockLocation`, `IP_Address`.
-* **LeaveRequests:** `ID`, `UserId`, `TanggalMulai`, `TanggalSelesai`, `Jenis`, `Alasan`, `BuktiFileUrl`, `StatusPersetujuan`.
-* **SchoolConfig:** `ID`, `SchoolLatitude`, `SchoolLongitude`, `RadiusToleransiMetre`, `JamMasukMulai`, `JamMasukBatas`.
+* **Users:** `Id`, `Username`, `Nama`, `PasswordHash`, `Role`, `DeviceID`, `StatusAktif`, `IsDeletable`.
+* **Attendances:** `Id`, `UserId`, `Tanggal`, `JamMasuk`, `JamPulang`, `Status`, `Latitude`, `Longitude`, `IsMockLocation`, `IP_Address`, `Keterangan`.
