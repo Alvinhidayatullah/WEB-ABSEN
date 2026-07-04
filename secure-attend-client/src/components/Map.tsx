@@ -73,7 +73,7 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
           style={{ height: '100%', width: '100%', backgroundColor: mapTheme === 'dark' ? '#0f1411' : '#f5f5f5' }}
           attributionControl={false}
         >
-          <TileLayer url={mapTheme === 'light' ? lightMapUrl : darkMapUrl} />
+          <TileLayer key={mapTheme} url={mapTheme === 'light' ? lightMapUrl : darkMapUrl} />
         
         {/* Lingkaran Radius Sekolah (Geofence) */}
         <Circle 

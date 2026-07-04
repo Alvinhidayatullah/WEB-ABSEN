@@ -6,7 +6,7 @@ const DynamicMap = dynamic(() => import("@/components/Map"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-[400px] md:h-[500px] rounded-2xl bg-card border-2 border-primary/20 flex items-center justify-center animate-pulse">
-      <p className="text-primary font-mono animate-bounce">MEMUAT SISTEM RADAR YASDA...</p>
+      <p className="text-primary font-mono animate-bounce">MEMUAT SISTEM RADAR SMK YASDA...</p>
     </div>
   ),
 });
@@ -69,7 +69,7 @@ export default function KepsekDashboard() {
             })
           });
           let data: any = {};
-          try { data = await res.json(); } catch(e) {}
+          try { data = await res.json(); } catch (e) { }
 
           if (res.ok) {
             setMessage({ type: "success", text: "Absensi berhasil dicatat!" });
@@ -113,7 +113,7 @@ export default function KepsekDashboard() {
         })
       });
       let data: any = {};
-      try { data = await res.json(); } catch(e) {}
+      try { data = await res.json(); } catch (e) { }
 
       if (res.ok) {
         setMessage({ type: "success", text: `Pengajuan ${permitModal.type} berhasil dicatat!` });
