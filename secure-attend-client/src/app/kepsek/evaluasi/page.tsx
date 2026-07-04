@@ -53,7 +53,7 @@ export default function KepsekEvaluasi() {
         row.tanggal.split('T')[0],
         row.nama,
         row.status,
-        row.status === 'Hadir' ? row.jamMasuk : (row.keterangan || "-")
+        row.status === 'Hadir' ? (row.jamMasuk || "-") : `(${row.jamMasuk || "-"}) ${row.keterangan || "-"}`
       ];
     });
 
@@ -266,11 +266,14 @@ export default function KepsekEvaluasi() {
                     <td className="p-4">
                       {row.status === 'Hadir' ? (
                         <div className="text-primary font-mono bg-primary/5 inline-block px-2 py-1 rounded">
-                          Jam Masuk: {row.jamMasuk}
+                          Jam Masuk: {row.jamMasuk || "-"}
                         </div>
                       ) : (
-                        <div className="text-foreground/80 text-xs italic max-w-xs truncate" title={row.keterangan}>
-                          "{row.keterangan}"
+                        <div className="flex flex-col gap-1">
+                          <span className="text-primary font-mono text-xs font-bold bg-primary/5 inline-block px-2 py-1 rounded w-fit">{row.jamMasuk || "-"}</span>
+                          <span className="text-foreground/80 text-xs italic max-w-xs truncate" title={row.keterangan}>
+                            "{row.keterangan}"
+                          </span>
                         </div>
                       )}
                     </td>
