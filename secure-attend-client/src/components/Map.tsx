@@ -59,7 +59,11 @@ export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMete
       {/* Custom Theme Toggle Button */}
       <button 
         onClick={() => setMapTheme(prev => prev === 'light' ? 'dark' : 'light')}
-        className="absolute top-4 right-4 z-[400] bg-white/90 backdrop-blur-sm text-slate-800 p-2 px-4 rounded-lg shadow-lg text-xs font-bold border border-slate-200 hover:bg-white transition-all flex items-center gap-2"
+        className={`absolute top-4 right-4 z-[400] backdrop-blur-sm p-2 px-4 rounded-lg shadow-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+          mapTheme === 'light' 
+            ? 'bg-[#0f1411]/90 text-white border-black hover:bg-black' 
+            : 'bg-white/90 text-slate-800 border-white hover:bg-white'
+        }`}
       >
         {mapTheme === 'light' ? '🌙 Mode Gelap' : '☀️ Mode Terang'}
       </button>
