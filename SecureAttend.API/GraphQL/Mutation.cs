@@ -98,28 +98,44 @@ namespace SecureAttend.API.GraphQL
 
         [Authorize(Roles = new[] { "GURU", "KEPALA_SEKOLAH" })]
         public async Task<MessagePayload> CheckIn(
-            double? latitude, 
-            double? longitude, 
+            double? latitude,
+            double? longitude,
             bool isMockLocation,
+            double? accuracy,
             [Service] ApplicationDbContext context,
             [Service] IHttpContextAccessor httpContextAccessor)
         {
             var userIdStr = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdStr, out int userId)) throw new GraphQLException("Sesi tidak valid.");
 
+            // === LAYER 1: Cek data koordinat ada ===
             if (!latitude.HasValue || !longitude.HasValue)
                 throw new GraphQLException("Koordinat GPS tidak ditemukan. Pastikan akses lokasi diizinkan.");
 
-            double distance = CalculateDistanceMeters(latitude.Value, longitude.Value, SCHOOL_LAT, SCHOOL_LNG);
-            if (distance > MAX_RADIUS_METERS)
-                throw new GraphQLException($"Akses Ditolak! Anda berada di luar radius sekolah. Jarak Anda: {Math.Round(distance)} meter.");
-
+            // === LAYER 2: Anti Fake GPS — flag dari browser ===
             if (isMockLocation)
-                throw new GraphQLException("Sistem mendeteksi penggunaan Lokasi Palsu (Fake GPS).");
+                throw new GraphQLException("Sistem mendeteksi penggunaan GPS Palsu (Mock Location). Absensi ditolak.");
 
+            var lat = latitude.Value;
+            var lng = longitude.Value;
+
+            // === LAYER 3: Validasi batas wilayah Indonesia ===
+            // Wilayah Indonesia: Lat -11 s/d 6, Lng 95 s/d 141
+            if (lat < -11.0 || lat > 6.0 || lng < 95.0 || lng > 141.0)
+                throw new GraphQLException("Koordinat GPS tidak valid atau di luar wilayah Indonesia. Kemungkinan terjadi manipulasi data.");
+
+            // === LAYER 4: Validasi akurasi GPS (maksimal 50 meter) ===
+            if (accuracy.HasValue && accuracy.Value > 50.0)
+                throw new GraphQLException($"Sinyal GPS terlalu lemah (akurasi: {Math.Round(accuracy.Value)}m). Pindah ke tempat lebih terbuka dan coba lagi.");
+
+            // === LAYER 5: Validasi Geofence (Haversine radius) ===
+            double distance = CalculateDistanceMeters(lat, lng, SCHOOL_LAT, SCHOOL_LNG);
+            if (distance > MAX_RADIUS_METERS)
+                throw new GraphQLException($"Akses Ditolak! Anda berada di luar radius sekolah. Jarak Anda: {Math.Round(distance)} meter dari pusat sekolah.");
+
+            // === LAYER 6: Cegah duplikasi absen hari ini ===
             var wibTime = DateTime.UtcNow.AddHours(7);
             var today = wibTime.Date;
-
             var existingAttendance = await context.Attendances.FirstOrDefaultAsync(a => a.UserId == userId && a.Tanggal == today);
             if (existingAttendance != null) throw new GraphQLException("Anda sudah melakukan absen hari ini.");
 
@@ -129,16 +145,17 @@ namespace SecureAttend.API.GraphQL
                 Tanggal = today,
                 JamMasuk = new TimeSpan(wibTime.Hour, wibTime.Minute, wibTime.Second),
                 Status = "Hadir",
-                Latitude = latitude,
-                Longitude = longitude,
+                Latitude = lat,
+                Longitude = lng,
                 IsMockLocation = isMockLocation,
+                Accuracy = accuracy,
                 IP_Address = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString()
             };
 
             context.Attendances.Add(attendance);
             await context.SaveChangesAsync();
 
-            return new MessagePayload { Message = $"Absen sukses! Jarak tervalidasi: {Math.Round(distance)}m.", Success = true };
+            return new MessagePayload { Message = $"Absen sukses! Tervalidasi dalam radius {Math.Round(distance)}m dari SMK YASDA.", Success = true };
         }
 
         [Authorize(Roles = new[] { "GURU", "KEPALA_SEKOLAH" })]

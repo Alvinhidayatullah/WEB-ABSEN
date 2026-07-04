@@ -1,141 +1,216 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 
 const DynamicMap = dynamic(() => import("@/components/Map"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[400px] md:h-[500px] rounded-2xl bg-card border-2 border-primary/20 flex items-center justify-center animate-pulse">
+    <div className="w-full h-[420px] md:h-[500px] rounded-2xl bg-card border-2 border-primary/20 flex items-center justify-center animate-pulse">
       <p className="text-primary font-mono animate-bounce">MEMUAT SISTEM RADAR SMK YASDA...</p>
     </div>
   ),
 });
 
+const SCHOOL_LAT = -7.014843;
+const SCHOOL_LNG = 106.545348;
+const RADIUS_METERS = 100;
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function TeacherDashboard() {
   const [history, setHistory] = useState<any[]>([]);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-
+  const [checkInStep, setCheckInStep] = useState("");
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
-
-  // State untuk Izin / Sakit
+  const [userAccuracy, setUserAccuracy] = useState<number | null>(null);
+  const [userDistance, setUserDistance] = useState<number | null>(null);
   const [permitModal, setPermitModal] = useState<{ isOpen: boolean; type: "Izin" | "Sakit" | null }>({ isOpen: false, type: null });
   const [keterangan, setKeterangan] = useState("");
   const [isSubmittingPermit, setIsSubmittingPermit] = useState(false);
 
-  const SCHOOL_LAT = -7.014843;
-  const SCHOOL_LNG = 106.545348;
-  const RADIUS_METERS = 100;
-
   useEffect(() => {
     fetchHistory();
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy } = pos.coords;
+          setUserLat(latitude);
+          setUserLng(longitude);
+          setUserAccuracy(accuracy);
+          setUserDistance(haversineDistance(latitude, longitude, SCHOOL_LAT, SCHOOL_LNG));
+        },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000 }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
   }, []);
 
   async function fetchHistory() {
     try {
-      const graphqlQuery = {
-        query: `query { me { tanggal jamMasuk status latitude longitude isMockLocation keterangan } }`
-      };
       const res = await fetch("http://localhost:5150/graphql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(graphqlQuery)
+        body: JSON.stringify({ query: `query { me { tanggal jamMasuk status latitude longitude isMockLocation keterangan } }` })
       });
       if (res.ok) {
         const json = await res.json();
-        if (json.data && json.data.me) {
-          setHistory(json.data.me);
-        }
+        if (json.data?.me) setHistory(json.data.me);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }
 
-  const handleCheckIn = () => {
+  async function getSampledPosition(): Promise<{ lat: number; lng: number; accuracy: number; isMock: boolean }> {
+    return new Promise((resolve, reject) => {
+      const samples: { lat: number; lng: number; accuracy: number; ts: number }[] = [];
+      let attempts = 0;
+      const MAX_SAMPLES = 3;
+
+      const collectSample = () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            attempts++;
+            setCheckInStep(`Mengambil sampel GPS ${attempts}/${MAX_SAMPLES}...`);
+            samples.push({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+              ts: pos.timestamp,
+            });
+
+            if (samples.length >= 2) {
+              const s1 = samples[samples.length - 2];
+              const s2 = samples[samples.length - 1];
+              const dist = haversineDistance(s1.lat, s1.lng, s2.lat, s2.lng);
+              const timeSec = Math.max((s2.ts - s1.ts) / 1000, 0.1);
+              const speedKmh = (dist / timeSec) * 3.6;
+              if (speedKmh > 50) {
+                reject(new Error("Anomali terdeteksi: perpindahan GPS tidak wajar (>50 km/jam). Kemungkinan Fake GPS."));
+                return;
+              }
+            }
+
+            if (samples.length >= MAX_SAMPLES) {
+              const avgLat = samples.reduce((s, x) => s + x.lat, 0) / samples.length;
+              const avgLng = samples.reduce((s, x) => s + x.lng, 0) / samples.length;
+              const avgAcc = samples.reduce((s, x) => s + x.accuracy, 0) / samples.length;
+
+              if (avgAcc > 50) {
+                reject(new Error(`Sinyal GPS lemah (akurasi: ${Math.round(avgAcc)}m). Pindah ke tempat lebih terbuka.`));
+                return;
+              }
+
+              const maxSpread = Math.max(...samples.map(s => haversineDistance(s.lat, s.lng, avgLat, avgLng)));
+              if (maxSpread > 10) {
+                reject(new Error(`Koordinat GPS tidak stabil (variasi ${Math.round(maxSpread)}m). Kemungkinan Fake GPS.`));
+                return;
+              }
+
+              const gpsAge = (Date.now() - samples[0].ts) / 1000;
+              if (gpsAge > 60) {
+                reject(new Error("Data GPS terlalu lama (>60 detik). Kemungkinan cache/manipulasi lokasi."));
+                return;
+              }
+
+              if (avgLat < -11 || avgLat > 6 || avgLng < 95 || avgLng > 141) {
+                reject(new Error("Koordinat GPS tidak masuk akal (luar wilayah Indonesia). Fake GPS terdeteksi."));
+                return;
+              }
+
+              resolve({ lat: avgLat, lng: avgLng, accuracy: avgAcc, isMock: false });
+            } else {
+              setTimeout(collectSample, 1200);
+            }
+          },
+          (err) => {
+            if (err.code === err.PERMISSION_DENIED) {
+              reject(new Error("Anda harus mengizinkan akses lokasi untuk bisa absen."));
+            } else {
+              reject(new Error("Gagal mendapatkan lokasi GPS. Pastikan GPS aktif."));
+            }
+          },
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+        );
+      };
+
+      collectSample();
+    });
+  }
+
+  const handleCheckIn = async () => {
     setMessage({ type: "", text: "" });
     if (!navigator.geolocation) {
       setMessage({ type: "error", text: "Browser Anda tidak mendukung Geolocation." });
       return;
     }
-
     setIsCheckingIn(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLat(latitude);
-        setUserLng(longitude);
-
-        try {
-          const graphqlQuery = {
-            query: `mutation CheckIn($lat: Float, $lng: Float, $isMock: Boolean!) {
-              checkIn(latitude: $lat, longitude: $lng, isMockLocation: $isMock) { message success }
-            }`,
-            variables: { lat: latitude, lng: longitude, isMock: false }
-          };
-          const res = await fetch("http://localhost:5150/graphql", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify(graphqlQuery)
-          });
-          const json = await res.json();
-
-          if (json.errors) {
-            setMessage({ type: "error", text: json.errors[0]?.message || "Gagal absen." });
-          } else if (json.data && json.data.checkIn) {
-            if (json.data.checkIn.success) {
-              setMessage({ type: "success", text: json.data.checkIn.message });
-              fetchHistory();
-            } else {
-              setMessage({ type: "error", text: json.data.checkIn.message });
-            }
-          }
-        } catch (err) {
-          setMessage({ type: "error", text: "Terjadi kesalahan server saat check-in." });
-        } finally {
-          setIsCheckingIn(false);
-        }
-      },
-      (error) => {
-        setIsCheckingIn(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          setMessage({ type: "error", text: "Anda harus mengizinkan akses lokasi untuk bisa absen." });
+    setCheckInStep("Memulai validasi GPS multi-sampel...");
+    try {
+      const { lat, lng, accuracy, isMock } = await getSampledPosition();
+      setUserLat(lat);
+      setUserLng(lng);
+      setUserAccuracy(accuracy);
+      setUserDistance(haversineDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG));
+      setCheckInStep("Mengirim ke server untuk verifikasi akhir...");
+      const res = await fetch("http://localhost:5150/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          query: `mutation CheckIn($lat: Float, $lng: Float, $isMock: Boolean!, $accuracy: Float) {
+            checkIn(latitude: $lat, longitude: $lng, isMockLocation: $isMock, accuracy: $accuracy) { message success }
+          }`,
+          variables: { lat, lng, isMock, accuracy }
+        })
+      });
+      const json = await res.json();
+      if (json.errors) {
+        setMessage({ type: "error", text: json.errors[0]?.message || "Gagal absen." });
+      } else if (json.data?.checkIn) {
+        if (json.data.checkIn.success) {
+          setMessage({ type: "success", text: json.data.checkIn.message });
+          fetchHistory();
         } else {
-          setMessage({ type: "error", text: "Gagal mendapatkan lokasi Anda." });
+          setMessage({ type: "error", text: json.data.checkIn.message });
         }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Terjadi kesalahan saat validasi lokasi." });
+    } finally {
+      setIsCheckingIn(false);
+      setCheckInStep("");
+    }
   };
 
   const handlePermitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!keterangan.trim()) return;
-
     setIsSubmittingPermit(true);
     setMessage({ type: "", text: "" });
-
     try {
-      const graphqlQuery = {
-        query: `mutation SubmitPermit($status: String!, $keterangan: String!) {
-          submitPermit(status: $status, keterangan: $keterangan) { message success }
-        }`,
-        variables: { status: permitModal.type, keterangan: keterangan }
-      };
       const res = await fetch("http://localhost:5150/graphql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(graphqlQuery)
+        body: JSON.stringify({
+          query: `mutation SubmitPermit($status: String!, $keterangan: String!) { submitPermit(status: $status, keterangan: $keterangan) { message success } }`,
+          variables: { status: permitModal.type, keterangan }
+        })
       });
       const json = await res.json();
-
       if (json.errors) {
         setMessage({ type: "error", text: json.errors[0]?.message || `Gagal mengajukan ${permitModal.type}.` });
-      } else if (json.data && json.data.submitPermit) {
+      } else if (json.data?.submitPermit) {
         if (json.data.submitPermit.success) {
           setMessage({ type: "success", text: json.data.submitPermit.message });
           setPermitModal({ isOpen: false, type: null });
@@ -152,7 +227,6 @@ export default function TeacherDashboard() {
     }
   };
 
-  // Kalkulasi sinkronisasi waktu absolut ke zona WIB (UTC+7) untuk mencegah bug zona waktu
   const now = new Date();
   const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
   const todayStr = wibTime.toISOString().split('T')[0];
@@ -160,36 +234,20 @@ export default function TeacherDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
-
-      {/* Modal Izin / Sakit */}
       {permitModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in p-4">
-          <div className="bg-card w-full max-w-md p-6 rounded-2xl shadow-xl border border-primary/20 scale-in-center">
+          <div className="bg-card w-full max-w-md p-6 rounded-2xl shadow-xl border border-primary/20">
             <h3 className="text-xl font-bold mb-2">Pengajuan {permitModal.type}</h3>
-            <p className="text-foreground/60 text-sm mb-6">Harap masukkan alasan atau keterangan dengan jelas. Data akan direkam ke Kepala Sekolah.</p>
-
+            <p className="text-foreground/60 text-sm mb-6">Harap masukkan alasan dengan jelas. Data akan direkam ke Kepala Sekolah.</p>
             <form onSubmit={handlePermitSubmit}>
-              <textarea
-                value={keterangan}
-                onChange={(e) => setKeterangan(e.target.value)}
+              <textarea value={keterangan} onChange={(e) => setKeterangan(e.target.value)}
                 className="w-full h-32 px-4 py-3 rounded-xl border border-primary/20 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all mb-4 resize-none"
-                placeholder={`Masukkan alasan ${permitModal.type}...`}
-                required
-              />
+                placeholder={`Masukkan alasan ${permitModal.type}...`} required />
               <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPermitModal({ isOpen: false, type: null })}
-                  className="flex-1 px-4 py-2 rounded-xl font-bold bg-foreground/5 text-foreground hover:bg-foreground/10 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingPermit || !keterangan.trim()}
-                  className={`flex-1 px-4 py-2 rounded-xl font-bold transition-all ${permitModal.type === 'Sakit' ? 'bg-destructive text-white hover:bg-destructive/90' : 'bg-amber-500 text-white hover:bg-amber-600'
-                    } disabled:opacity-50`}
-                >
+                <button type="button" onClick={() => setPermitModal({ isOpen: false, type: null })}
+                  className="flex-1 px-4 py-2 rounded-xl font-bold bg-foreground/5 text-foreground hover:bg-foreground/10 transition-colors">Batal</button>
+                <button type="submit" disabled={isSubmittingPermit || !keterangan.trim()}
+                  className={`flex-1 px-4 py-2 rounded-xl font-bold transition-all ${permitModal.type === 'Sakit' ? 'bg-destructive text-white hover:bg-destructive/90' : 'bg-amber-500 text-white hover:bg-amber-600'} disabled:opacity-50`}>
                   {isSubmittingPermit ? "Memproses..." : "Kirim Pengajuan"}
                 </button>
               </div>
@@ -210,77 +268,66 @@ export default function TeacherDashboard() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-        {/* Peta Radar (Kiri) */}
         <div className="order-2 lg:order-1 relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-primary to-green-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 pointer-events-none"></div>
-          <DynamicMap
-            schoolLat={SCHOOL_LAT}
-            schoolLng={SCHOOL_LNG}
-            radiusMeters={RADIUS_METERS}
-            userLat={userLat}
-            userLng={userLng}
-          />
+          <DynamicMap schoolLat={SCHOOL_LAT} schoolLng={SCHOOL_LNG} radiusMeters={RADIUS_METERS}
+            userLat={userLat} userLng={userLng} accuracy={userAccuracy} distance={userDistance} />
         </div>
 
-        {/* Panel Kendali Absen (Kanan) */}
         <div className="order-1 lg:order-2 bg-card p-8 rounded-3xl shadow-sm border border-primary/10 text-center relative overflow-hidden flex flex-col justify-center min-h-[350px]">
           <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent pointer-events-none" />
-
           <div className="relative z-10">
-            <div className="mb-6 mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 transition-colors shadow-[0_0_15px_rgba(92,161,103,0.3)]">
+            <div className="mb-6 mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 shadow-[0_0_15px_rgba(92,161,103,0.3)]">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
             </div>
-
             <h2 className="text-2xl font-bold mb-2">Validasi SMK YASDA</h2>
-            <p className="text-foreground/60 mb-8 max-w-sm mx-auto text-sm">
-              Tekan tombol di bawah untuk mendeteksi koordinat Anda. Sistem radar akan memastikan Anda berada di dalam radius sekolah.
+            <p className="text-foreground/60 mb-4 max-w-sm mx-auto text-sm">
+              Sistem mengambil 3 sampel GPS dan memvalidasi lokasi secara ketat (anti-cheat aktif).
             </p>
 
-            <div className="space-y-4">
-              <button
-                onClick={handleCheckIn}
-                disabled={isCheckingIn || hasCheckedInToday}
-                className={`px-8 py-4 w-full md:w-auto min-w-[250px] rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2 mx-auto shadow-lg shadow-primary/20 ${hasCheckedInToday
-                    ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed shadow-none border border-foreground/10'
-                    : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95 border border-primary'
-                  }`}
-              >
-                {isCheckingIn ? "MENDETEKSI LOKASI..." : hasCheckedInToday ? "SUDAH ABSEN" : "ABSEN SEKARANG"}
-              </button>
+            {userLat && (
+              <div className="mb-6 grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-foreground/5 rounded-xl p-2.5">
+                  <div className="text-foreground/50 mb-0.5">Jarak ke Sekolah</div>
+                  <div className={`font-bold font-mono text-sm ${userDistance !== null && userDistance !== undefined && userDistance <= RADIUS_METERS ? 'text-green-500' : 'text-red-500'}`}>
+                    {userDistance !== null && userDistance !== undefined ? `${Math.round(userDistance)}m` : '-'}
+                  </div>
+                </div>
+                <div className="bg-foreground/5 rounded-xl p-2.5">
+                  <div className="text-foreground/50 mb-0.5">Akurasi GPS</div>
+                  <div className={`font-bold font-mono text-sm ${!userAccuracy ? 'text-foreground/40' : userAccuracy <= 20 ? 'text-green-500' : userAccuracy <= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                    {userAccuracy ? `±${Math.round(userAccuracy)}m` : '-'}
+                  </div>
+                </div>
+              </div>
+            )}
 
-              <div className="flex items-center justify-center gap-4 pt-4">
-                <button
-                  onClick={() => setPermitModal({ isOpen: true, type: "Izin" })}
-                  disabled={hasCheckedInToday}
-                  className="px-6 py-2 rounded-full font-bold text-sm bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white border border-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Ajukan Izin
-                </button>
-                <button
-                  onClick={() => setPermitModal({ isOpen: true, type: "Sakit" })}
-                  disabled={hasCheckedInToday}
-                  className="px-6 py-2 rounded-full font-bold text-sm bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Lapor Sakit
-                </button>
+            {checkInStep && (
+              <div className="mb-4 px-4 py-2 bg-primary/10 rounded-xl text-primary text-xs font-mono animate-pulse">{checkInStep}</div>
+            )}
+
+            <div className="space-y-4">
+              <button onClick={handleCheckIn} disabled={isCheckingIn || hasCheckedInToday}
+                className={`px-8 py-4 w-full md:w-auto min-w-[250px] rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2 mx-auto shadow-lg shadow-primary/20 ${hasCheckedInToday ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed shadow-none border border-foreground/10' : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95 border border-primary'}`}>
+                {isCheckingIn ? (<><svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>MEMVALIDASI GPS...</>) : hasCheckedInToday ? "✅ SUDAH ABSEN HARI INI" : "📍 ABSEN SEKARANG"}
+              </button>
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <button onClick={() => setPermitModal({ isOpen: true, type: "Izin" })} disabled={hasCheckedInToday}
+                  className="px-6 py-2 rounded-full font-bold text-sm bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white border border-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Ajukan Izin</button>
+                <button onClick={() => setPermitModal({ isOpen: true, type: "Sakit" })} disabled={hasCheckedInToday}
+                  className="px-6 py-2 rounded-full font-bold text-sm bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Lapor Sakit</button>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* Riwayat Absensi */}
       <div className="bg-card rounded-2xl shadow-sm border border-primary/10 overflow-hidden mt-12">
         <div className="p-6 border-b border-primary/5">
           <h2 className="text-xl font-semibold text-foreground">Riwayat 30 Hari Terakhir</h2>
         </div>
-
         {history.length === 0 ? (
-          <div className="p-8 text-center text-foreground/50">
-            Belum ada riwayat absensi.
-          </div>
+          <div className="p-8 text-center text-foreground/50">Belum ada riwayat absensi.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -298,20 +345,12 @@ export default function TeacherDashboard() {
                     <td className="p-4 text-foreground font-medium">{new Date(h.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
                     <td className="p-4 font-mono text-primary">{h.jamMasuk?.substring(0, 5) || "-"}</td>
                     <td className="p-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${h.status === 'Hadir' ? 'bg-primary/10 text-primary' :
-                          h.status === 'Sakit' ? 'bg-destructive/10 text-destructive' : 'bg-amber-500/10 text-amber-500'
-                        }`}>
-                        {h.status}
-                      </span>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${h.status === 'Hadir' ? 'bg-primary/10 text-primary' : h.status === 'Sakit' ? 'bg-destructive/10 text-destructive' : 'bg-amber-500/10 text-amber-500'}`}>{h.status}</span>
                     </td>
                     <td className="p-4 text-xs">
-                      {h.keterangan ? (
-                        <span className="text-foreground/80 italic">"{h.keterangan}"</span>
-                      ) : h.latitude ? (
-                        <span className="font-mono text-foreground/50">{h.latitude.toFixed(5)}, {h.longitude.toFixed(5)}</span>
-                      ) : (
-                        <span className="text-foreground/30">-</span>
-                      )}
+                      {h.keterangan ? (<span className="text-foreground/80 italic">"{h.keterangan}"</span>
+                      ) : h.latitude ? (<span className="font-mono text-foreground/50">{h.latitude.toFixed(5)}, {h.longitude.toFixed(5)}</span>
+                      ) : (<span className="text-foreground/30">-</span>)}
                     </td>
                   </tr>
                 ))}

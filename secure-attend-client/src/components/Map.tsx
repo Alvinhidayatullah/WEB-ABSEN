@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMap, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fix custom marker icon issues in Leaflet with Webpack/Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -13,15 +12,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Custom Icon untuk user (Guru)
-const userIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+const schoolIcon = new L.DivIcon({
+  html: `<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border:3px solid white;box-shadow:0 2px 12px rgba(59,130,246,0.5);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:14px;">🏫</span></div>`,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+  className: '',
 });
+
+function makeUserIcon(isInside: boolean) {
+  const color = isInside ? '#22c55e' : '#ef4444';
+  const glow = isInside ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)';
+  return new L.DivIcon({
+    html: `<div style="width:32px;height:32px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 0 0 4px ${glow},0 2px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;animation:pulse-pin 1.8s infinite;"><span style="font-size:14px;">📍</span></div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
+    className: '',
+  });
+}
 
 interface MapProps {
   userLat?: number | null;
@@ -29,89 +38,106 @@ interface MapProps {
   schoolLat: number;
   schoolLng: number;
   radiusMeters: number;
+  accuracy?: number | null;
+  distance?: number | null;
 }
 
-function FlyToUser({ lat, lng }: { lat: number, lng: number }) {
+function FlyToUser({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
   useEffect(() => {
-    map.flyTo([lat, lng], 17, { animate: true, duration: 1.5 });
+    map.flyTo([lat, lng], 18, { animate: true, duration: 1.5 });
   }, [lat, lng, map]);
   return null;
 }
 
-export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMeters }: MapProps) {
-  const [mapTheme, setMapTheme] = useState<'light' | 'dark'>('light');
-
-  // Peta terang (default) dan gelap CartoDB
-  const lightMapUrl = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-  const darkMapUrl = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-  
-  // Hitung jarak murni di client untuk visualisasi (opsional)
-  let isInRadius = false;
-  if (userLat && userLng) {
-    const from = L.latLng(userLat, userLng);
-    const to = L.latLng(schoolLat, schoolLng);
-    isInRadius = from.distanceTo(to) <= radiusMeters;
-  }
+export default function Map({ userLat, userLng, schoolLat, schoolLng, radiusMeters, accuracy, distance }: MapProps) {
+  const isInRadius = !!(userLat && userLng && distance !== null && distance !== undefined && distance <= radiusMeters);
+  const geofenceColor = (userLat && userLng) ? (isInRadius ? '#22c55e' : '#ef4444') : '#5ca167';
 
   return (
     <div className="flex flex-col gap-3 w-full relative z-20">
-      {/* Tombol diletakkan di luar area peta agar lebih jelas dan tidak mengganggu */}
-      <div className="flex justify-end w-full">
-        <button 
-          onClick={() => setMapTheme(prev => prev === 'light' ? 'dark' : 'light')}
-          className="px-4 py-2 rounded-xl shadow-sm text-sm font-bold transition-transform active:scale-95 flex items-center gap-2 border border-primary/20 bg-card hover:bg-primary/10 text-foreground"
-        >
-          {mapTheme === 'light' ? '🌙 Gunakan Peta Gelap' : '☀️ Gunakan Peta Terang'}
-        </button>
+      {/* Status Bar */}
+      <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-500 ${
+        !userLat ? 'bg-card border-primary/20 text-foreground/50' :
+        isInRadius ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400' :
+                     'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+      }`}>
+        <div className="flex items-center gap-2">
+          <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${
+            !userLat ? 'bg-foreground/30' :
+            isInRadius ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]' :
+                         'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'
+          }`} />
+          <span>
+            {!userLat ? 'Menunggu sinyal GPS...' :
+             isInRadius ? '✅ DALAM ZONA AMAN — Siap Absen' :
+                          '⛔ DI LUAR ZONA SEKOLAH'}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 text-xs font-mono">
+          {distance !== null && distance !== undefined && (
+            <span className="opacity-80">📏 {Math.round(distance)}m</span>
+          )}
+          {accuracy !== null && accuracy !== undefined && (
+            <span className={accuracy <= 20 ? 'text-green-500' : accuracy <= 50 ? 'text-amber-500' : 'text-red-500'}>
+              🎯 ±{Math.round(accuracy)}m
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl shadow-primary/5 relative z-10">
-        <MapContainer 
-          center={[schoolLat, schoolLng]} 
-          zoom={17} 
-          style={{ height: '100%', width: '100%', backgroundColor: mapTheme === 'dark' ? '#0f1411' : '#f5f5f5' }}
-          attributionControl={false}
-        >
-          <TileLayer key={mapTheme} url={mapTheme === 'light' ? lightMapUrl : darkMapUrl} />
-        
-        {/* Lingkaran Radius Sekolah (Geofence) */}
-        <Circle 
-          center={[schoolLat, schoolLng]} 
-          radius={radiusMeters} 
-          pathOptions={{ 
-            color: '#5ca167', 
-            fillColor: '#5ca167', 
-            fillOpacity: 0.15,
-            weight: 2,
-            dashArray: "5, 10" // Efek garis putus-putus seperti radar
-          }} 
-        >
-          <Popup>Zona Absensi SMK YASDA (Radius: {radiusMeters}m)</Popup>
-        </Circle>
+      {/* Map Container */}
+      <div className="w-full h-[420px] md:h-[500px] rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl shadow-primary/5 relative z-10">
+        <style>{`
+          @keyframes pulse-pin { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+        `}</style>
+        <MapContainer center={[schoolLat, schoolLng]} zoom={18} style={{ height: '100%', width: '100%' }} attributionControl={false}>
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
 
-        {/* Titik Pusat Sekolah */}
-        <Marker position={[schoolLat, schoolLng]}>
-          <Popup><strong>SMK YASDA</strong><br/>Titik Pusat Sekolah</Popup>
-        </Marker>
+          {/* Zona aura luar */}
+          <Circle center={[schoolLat, schoolLng]} radius={radiusMeters * 1.8}
+            pathOptions={{ color: geofenceColor, fillColor: geofenceColor, fillOpacity: 0.04, weight: 0 }} />
 
-        {/* Titik Pengguna (Jika lokasi sudah dideteksi) */}
-        {userLat && userLng && (
-          <>
-            <Marker position={[userLat, userLng]} icon={userIcon}>
-              <Popup>
-                <strong>Posisi Anda</strong><br/>
-                {isInRadius ? (
-                  <span className="text-green-600 font-bold">Dalam Zona Aman</span>
-                ) : (
-                  <span className="text-red-600 font-bold">Di Luar Zona Sekolah!</span>
-                )}
-              </Popup>
-            </Marker>
-            <FlyToUser lat={userLat} lng={userLng} />
-          </>
-        )}
-      </MapContainer>
+          {/* Geofence utama */}
+          <Circle center={[schoolLat, schoolLng]} radius={radiusMeters}
+            pathOptions={{ color: geofenceColor, fillColor: geofenceColor, fillOpacity: 0.15, weight: 2.5, dashArray: "6, 8" }}>
+            <Popup>
+              <strong>Zona Absensi SMK YASDA</strong><br />
+              Radius: {radiusMeters}m<br />
+              {userLat && distance !== undefined && distance !== null ? (
+                <span style={{ color: isInRadius ? '#22c55e' : '#ef4444', fontWeight: 'bold' }}>
+                  Jarak Anda: {Math.round(distance)}m — {isInRadius ? '✅ AMAN' : '⛔ DI LUAR'}
+                </span>
+              ) : 'Lokasi belum terdeteksi'}
+            </Popup>
+          </Circle>
+
+          {/* Marker Sekolah */}
+          <Marker position={[schoolLat, schoolLng]} icon={schoolIcon}>
+            <Popup><strong>🏫 SMK YASDA</strong><br />Pusat Zona Absensi</Popup>
+          </Marker>
+
+          {/* Marker & akurasi user */}
+          {userLat && userLng && (
+            <>
+              {accuracy && (
+                <Circle center={[userLat, userLng]} radius={accuracy}
+                  pathOptions={{ color: '#60a5fa', fillColor: '#60a5fa', fillOpacity: 0.08, weight: 1, dashArray: "3, 6" }} />
+              )}
+              <Marker position={[userLat, userLng]} icon={makeUserIcon(isInRadius)}>
+                <Popup>
+                  <strong>📍 Posisi Anda</strong><br />
+                  <span style={{ color: isInRadius ? '#22c55e' : '#ef4444', fontWeight: 'bold' }}>
+                    {isInRadius ? '✅ Dalam Zona Aman' : '⛔ Di Luar Zona!'}
+                  </span><br />
+                  Jarak: <strong>{distance !== null && distance !== undefined ? `${Math.round(distance)}m` : 'N/A'}</strong><br />
+                  Akurasi: <strong>{accuracy ? `±${Math.round(accuracy)}m` : 'N/A'}</strong>
+                </Popup>
+              </Marker>
+              <FlyToUser lat={userLat} lng={userLng} />
+            </>
+          )}
+        </MapContainer>
       </div>
     </div>
   );
