@@ -27,14 +27,14 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Sidebar Desktop & Mobile (Sederhana) */}
-      <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-primary/10 flex md:flex-col p-4 md:p-6 shadow-sm md:h-screen md:sticky top-0 z-20">
-        <div className="flex-1 flex justify-between md:justify-start items-center md:items-start md:flex-col w-full">
+      <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-primary/10 flex flex-col p-4 md:p-6 shadow-sm md:h-screen md:sticky top-0 z-20 overflow-hidden">
+        <div className="flex-1 flex flex-col gap-4 w-full">
           <div>
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-primary">SecureAttend</h2>
             <p className="hidden md:block text-xs text-foreground/50 mb-8 font-mono">SUPER_ADMIN PORTAL</p>
           </div>
           
-          <nav className="flex flex-row md:flex-col space-x-2 md:space-x-0 md:space-y-2 overflow-x-auto w-full">
+          <nav className="flex flex-row md:flex-col space-x-2 md:space-x-0 md:space-y-2 overflow-x-auto w-full pb-2 md:pb-0 scrollbar-hide">
             <Link 
               href="/admin" 
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors whitespace-nowrap ${

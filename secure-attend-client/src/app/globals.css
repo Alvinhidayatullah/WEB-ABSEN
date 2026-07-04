@@ -69,3 +69,12 @@ body {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* Sembunyikan scrollbar untuk elemen dengan class scrollbar-hide */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
