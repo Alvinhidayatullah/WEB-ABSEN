@@ -1,4 +1,4 @@
-# RuangHadir (Sistem Absensi Guru Terpadu)
+# RuangHadir (Ruang Hadir & Aman Bagi Guru)
 
 ## 1. Ringkasan Eksekutif (Executive Summary)
 RuangHadir (sebelumnya bernama SecureAttend) adalah aplikasi Absensi Guru berbasis web modern yang dibangun dengan arsitektur "Zero-Trust" dan kepatuhan penuh terhadap standar keamanan OWASP Top-10. Dirancang pertama kali untuk SMK YASDA (namun sangat skalabel untuk diadopsi oleh sekolah lain), sistem ini menggabungkan tema visual yang santai dan natural dengan mesin keamanan kelas militer. Sistem menjamin keakuratan data presensi melalui validasi lokasi absolut, dilengkapi mekanisme *Active Defense* untuk memblokir intrusi peretasan otomatis, sambil tetap memberikan pengalaman antarmuka yang sangat responsif, elegan, dan ringan di berbagai perangkat.
