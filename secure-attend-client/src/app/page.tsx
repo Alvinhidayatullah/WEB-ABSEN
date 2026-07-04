@@ -51,23 +51,22 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
       <div className="w-full max-w-sm space-y-8">
+        <div className="text-center">
           <div className="relative mx-auto w-24 h-24 mb-8">
             {/* Ambient Glow */}
             <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full animate-pulse"></div>
             {/* Glassmorphic Container */}
             <div className="relative w-full h-full bg-gradient-to-br from-card to-background rounded-[2rem] border border-primary/20 flex items-center justify-center shadow-[0_0_40px_-10px_rgba(75,127,82,0.4)] overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-              {/* Abstract Geo-Eco Logo */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-primary relative z-10 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_15px_rgba(75,127,82,0.6)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" className="stroke-primary/30" />
-                <path d="M3.27 6.96 12 12l8.73-5.04" className="stroke-primary/30" />
-                <path d="M12 22V12" className="stroke-primary/30" />
-                <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="3" className="stroke-primary" />
+              {/* Ruang (Pin Lokasi) & Hadir (Ceklis) Logo */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-primary relative z-10 transform group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_15px_rgba(75,127,82,0.6)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" className="stroke-primary/40" />
+                <path d="M9 10l2 2 4-4" strokeWidth="3" className="stroke-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.8)]" />
               </svg>
             </div>
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 font-sans">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 font-sans text-center">
             <span className="text-foreground">Ruang</span>
             <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary via-emerald-400 to-cyan-500 drop-shadow-[0_0_15px_rgba(75,127,82,0.2)]">Hadir</span>
           </h1>
@@ -79,6 +78,7 @@ export default function Home() {
             </p>
             <div className="h-[1px] w-8 bg-gradient-to-l from-transparent to-primary/50"></div>
           </div>
+        </div>
 
         <div className="bg-card p-6 rounded-2xl shadow-lg shadow-primary/5 border border-primary/10">
           <form className="space-y-4" onSubmit={handleLogin}>
