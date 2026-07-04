@@ -67,7 +67,7 @@ export default function KepsekDashboard() {
 
   async function fetchHistory() {
     try {
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -173,7 +173,7 @@ const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:515
       setUserAccuracy(accuracy);
       setUserDistance(haversineDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG));
       setCheckInStep("Mengirim ke server untuk verifikasi akhir...");
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -210,7 +210,7 @@ const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:515
     setIsSubmittingPermit(true);
     setMessage({ type: "", text: "" });
     try {
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:5150/graphql";
+const GRAPHQL_URL = "/api/graphql";
       const res = await fetch(GRAPHQL_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
