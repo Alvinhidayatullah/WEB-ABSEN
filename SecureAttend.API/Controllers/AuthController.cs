@@ -60,7 +60,7 @@ namespace SecureAttend.API.Controllers
                     new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, user.Username),
                     new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role)
                 }),
-                Expires = System.DateTime.UtcNow.AddHours(8),
+                Expires = System.DateTime.UtcNow.AddDays(3),
                 SigningCredentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(
                     new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
                     Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256Signature)
@@ -74,7 +74,7 @@ namespace SecureAttend.API.Controllers
                 HttpOnly = true,
                 Secure = true, // OWASP: Enforce secure flag
                 SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax,
-                Expires = System.DateTimeOffset.UtcNow.AddHours(8)
+                Expires = System.DateTimeOffset.UtcNow.AddDays(3)
             });
 
             return Ok(new { 

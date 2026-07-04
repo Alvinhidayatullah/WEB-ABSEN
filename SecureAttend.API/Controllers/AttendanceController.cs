@@ -72,7 +72,8 @@ namespace SecureAttend.API.Controllers
                 return BadRequest(new { message = "Sistem mendeteksi penggunaan Lokasi Palsu (Fake GPS). Absensi ditolak." });
             }
 
-            var today = DateTime.UtcNow.Date;
+            var wibTime = DateTime.UtcNow.AddHours(7);
+            var today = wibTime.Date;
             var existingAttendance = await _context.Attendances
                 .FirstOrDefaultAsync(a => a.UserId == userId && a.Tanggal == today);
 
@@ -85,7 +86,7 @@ namespace SecureAttend.API.Controllers
             {
                 UserId = userId,
                 Tanggal = today,
-                JamMasuk = DateTime.UtcNow.TimeOfDay,
+                JamMasuk = wibTime.TimeOfDay,
                 Status = "Hadir", // Bisa dilogika 'Terlambat' jika > jam tertentu
                 Latitude = req.Latitude,
                 Longitude = req.Longitude,
@@ -125,7 +126,8 @@ namespace SecureAttend.API.Controllers
         [Authorize(Roles = "SUPER_ADMIN,KEPALA_SEKOLAH")]
         public async Task<IActionResult> GetTodayStats()
         {
-            var today = DateTime.UtcNow.Date;
+            var wibTime = DateTime.UtcNow.AddHours(7);
+            var today = wibTime.Date;
             var totalGuru = await _context.Users.CountAsync(u => u.Role == "GURU" && u.StatusAktif);
             var hadirHariIni = await _context.Attendances.CountAsync(a => a.Tanggal == today && a.Status == "Hadir");
             var izinSakit = await _context.Attendances.CountAsync(a => a.Tanggal == today && (a.Status == "Izin" || a.Status == "Sakit"));
@@ -155,7 +157,8 @@ namespace SecureAttend.API.Controllers
                 return BadRequest(new { message = "Keterangan wajib diisi." });
             }
 
-            var today = DateTime.UtcNow.Date;
+            var wibTime = DateTime.UtcNow.AddHours(7);
+            var today = wibTime.Date;
             var existing = await _context.Attendances.FirstOrDefaultAsync(a => a.UserId == userId && a.Tanggal == today);
             
             if (existing != null)
@@ -167,7 +170,7 @@ namespace SecureAttend.API.Controllers
             {
                 UserId = userId,
                 Tanggal = today,
-                JamMasuk = DateTime.UtcNow.TimeOfDay,
+                JamMasuk = wibTime.TimeOfDay,
                 Status = req.Status,
                 Keterangan = req.Keterangan,
                 IP_Address = HttpContext.Connection.RemoteIpAddress?.ToString()

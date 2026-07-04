@@ -127,7 +127,10 @@ export default function TeacherDashboard() {
     }
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Kalkulasi sinkronisasi waktu absolut ke zona WIB (UTC+7) untuk mencegah bug zona waktu
+  const now = new Date();
+  const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  const todayStr = wibTime.toISOString().split('T')[0];
   const hasCheckedInToday = history.some(h => h.tanggal.startsWith(todayStr));
 
   return (

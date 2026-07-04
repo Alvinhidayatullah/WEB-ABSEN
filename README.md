@@ -17,8 +17,10 @@ Aplikasi menggunakan arsitektur *Separated Fullstack* (*Decoupled*) untuk isolas
 * **Standar Keamanan OWASP Top-10 & Active Defense**: Kebal terhadap BAC, SQLi, XSS, XXE, dll.
 * **Anti-Scanner Drop Mechanism**: Memutus koneksi otomatis (HTTP 444) jika mendeteksi scanner (Burp, ZAP, SQLMap).
 * **Anti-DDoS & Rate Limiting**: Algoritma Token Bucket (10 request/detik).
+* **Waktu Mutlak Server (UTC+7 WIB)**: Sinkronisasi waktu sistem yang menjamin pergantian hari terjadi persis pada 00:00 WIB, terlepas dari zona waktu perangkat klien (WITA/WIT).
+* **Sesi JWT Ekstensi 3 Hari**: Pencegahan *cookie injection* dengan pembatasan masa hidup token absensi dan HTTPOnly Cookie maksimal 3 hari per login.
 * **Geofencing & Anti-Fraud**: Strict radius check menggunakan formula Haversine. Mock GPS & Fake Location Detection.
-* **Role-Based Access Control (RBAC)**: Pemisahan hak SUPER_ADMIN, KEPALA_SEKOLAH, dan GURU.
+* **Role-Based Access Control (RBAC)**: Pemisahan hak SUPER_ADMIN, KEPALA_SEKOLAH, dan GURU. Perlindungan 100% dari celah *Broken Access Control (BAC)* dan manipulasi Role via *Mass Assignment*.
 * **UI/UX Elegan**: Mengusung desain *Eco-Tech Theme* dengan rasio mobile-first (720x1560) yang responsif dan sangat cepat.
 
 ## 4. Cara Menjalankan (How to Run)
