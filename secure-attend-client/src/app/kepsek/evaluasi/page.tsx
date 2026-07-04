@@ -1,6 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
+import * as XLSX from 'xlsx';
 
+function formatTimeSpan(pt: string) {
+  if (!pt) return "-";
+  if (!pt.startsWith('PT')) return pt.length >= 8 ? pt.substring(0, 8) : pt;
+  const hMatch = pt.match(/(\d+)H/);
+  const mMatch = pt.match(/(\d+)M/);
+  const sMatch = pt.match(/(\d+(?:\.\d+)?)S/);
+  const h = hMatch ? hMatch[1].padStart(2, '0') : '00';
+  const m = mMatch ? mMatch[1].padStart(2, '0') : '00';
+  const s = sMatch ? parseInt(sMatch[1]).toString().padStart(2, '0') : '00';
+  return `${h}:${m}:${s}`;
+}
 export default function KepsekEvaluasi() {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +86,7 @@ const GRAPHQL_URL = "/api/graphql";
         row.tanggal.split('T')[0],
         row.nama,
         row.status,
-        row.jamMasuk || "-",
+        formatTimeSpan(row.jamMasuk),
         row.keterangan || "-"
       ];
     });
@@ -311,8 +323,8 @@ const GRAPHQL_URL = "/api/graphql";
                         {row.status}
                       </span>
                     </td>
-                    <td className="p-4 font-mono text-primary whitespace-nowrap">
-                      {row.jamMasuk || "-"}
+                    <td className="p-4">
+                      {formatTimeSpan(row.jamMasuk)}
                     </td>
                     <td className="p-4">
                       {row.status === 'Hadir' ? (

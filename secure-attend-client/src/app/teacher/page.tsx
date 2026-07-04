@@ -17,12 +17,14 @@ const RADIUS_METERS = 300;
 
 function formatTimeSpan(pt: string) {
   if (!pt) return "-";
-  if (!pt.startsWith('PT')) return pt.substring(0, 5); // Fallback for standard time string
+  if (!pt.startsWith('PT')) return pt.length >= 8 ? pt.substring(0, 8) : pt;
   const hMatch = pt.match(/(\d+)H/);
   const mMatch = pt.match(/(\d+)M/);
+  const sMatch = pt.match(/(\d+(?:\.\d+)?)S/);
   const h = hMatch ? hMatch[1].padStart(2, '0') : '00';
   const m = mMatch ? mMatch[1].padStart(2, '0') : '00';
-  return `${h}:${m}`;
+  const s = sMatch ? parseInt(sMatch[1]).toString().padStart(2, '0') : '00';
+  return `${h}:${m}:${s}`;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -46,22 +48,28 @@ export default function TeacherDashboard() {
   const [permitModal, setPermitModal] = useState<{ isOpen: boolean; type: "Izin" | "Sakit" | null }>({ isOpen: false, type: null });
   const [keterangan, setKeterangan] = useState("");
   const [isSubmittingPermit, setIsSubmittingPermit] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>("Memeriksa akses lokasi GPS...");
 
   useEffect(() => {
     fetchHistory();
     if (navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
         (pos) => {
+          setLocationError(null);
           const { latitude, longitude, accuracy } = pos.coords;
           setUserLat(latitude);
           setUserLng(longitude);
           setUserAccuracy(accuracy);
           setUserDistance(haversineDistance(latitude, longitude, SCHOOL_LAT, SCHOOL_LNG));
         },
-        () => { },
-        { enableHighAccuracy: true, maximumAge: 5000 }
+        (err) => {
+          setLocationError("Akses lokasi ditolak atau tidak tersedia. Wajib aktifkan GPS/Lokasi untuk menggunakan aplikasi.");
+        },
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
       );
       return () => navigator.geolocation.clearWatch(watchId);
+    } else {
+      setLocationError("Perangkat atau browser Anda tidak mendukung GPS.");
     }
   }, []);
 
@@ -246,7 +254,25 @@ const GRAPHQL_URL = "/api/graphql";
   const hasCheckedInToday = history.some(h => h.tanggal.startsWith(todayStr));
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
+    <>
+      {locationError && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-md p-4">
+          <div className="bg-card w-full max-w-md p-8 rounded-3xl shadow-2xl border border-destructive/20 text-center animate-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-destructive" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </div>
+            <h2 className="text-2xl font-black text-foreground mb-4 tracking-tight">Akses Lokasi Wajib Aktif</h2>
+            <p className="text-foreground/70 mb-8">{locationError}</p>
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-destructive">Buka Pengaturan (Settings) perangkat/browser Anda dan izinkan Akses Lokasi.</p>
+              <button onClick={() => window.location.reload()} className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold hover:bg-primary/90 transition-transform active:scale-[0.98]">
+                Saya Sudah Aktifkan, Muat Ulang
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    <div className={`space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative ${locationError ? 'opacity-0 pointer-events-none' : ''}`}>
       {permitModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in p-4">
           <div className="bg-card w-full max-w-md p-6 rounded-2xl shadow-xl border border-primary/20">
@@ -373,5 +399,6 @@ const GRAPHQL_URL = "/api/graphql";
         )}
       </div>
     </div>
+    </>
   );
 }
