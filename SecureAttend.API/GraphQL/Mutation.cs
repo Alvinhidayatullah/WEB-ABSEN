@@ -342,6 +342,44 @@ namespace SecureAttend.API.GraphQL
             await context.SaveChangesAsync();
             return new MessagePayload { Message = "Pengguna berhasil dihapus.", Success = true };
         }
+
+        [Authorize]
+        public async Task<MessagePayload> UpdateProfile(
+            string? nama,
+            string? currentPassword,
+            string? newPassword,
+            [Service] ApplicationDbContext context,
+            [Service] IHttpContextAccessor httpContextAccessor)
+        {
+            var userStr = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userStr, out int userId)) throw new GraphQLException("Sesi tidak valid.");
+
+            var user = await context.Users.FindAsync(userId);
+            if (user == null) throw new GraphQLException("Pengguna tidak ditemukan.");
+
+            if (!string.IsNullOrWhiteSpace(nama))
+            {
+                user.Nama = nama.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(newPassword))
+            {
+                if (string.IsNullOrWhiteSpace(currentPassword))
+                {
+                    throw new GraphQLException("Anda harus memasukkan Password Saat Ini untuk mengubah password.");
+                }
+
+                if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                {
+                    throw new GraphQLException("Gagal Verifikasi Keamanan OWASP: Password Saat Ini salah.");
+                }
+
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            }
+
+            await context.SaveChangesAsync();
+            return new MessagePayload { Message = "Profil berhasil diperbarui.", Success = true };
+        }
     }
 
     public class AuthPayload

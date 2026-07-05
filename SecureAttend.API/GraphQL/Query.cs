@@ -32,6 +32,22 @@ namespace SecureAttend.API.GraphQL
                 .ToListAsync();
         }
 
+        [Authorize]
+        public async Task<User> GetMyProfile(
+            [Service] ApplicationDbContext context,
+            [Service] IHttpContextAccessor httpContextAccessor)
+        {
+            var userStr = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userStr, out int userId))
+            {
+                throw new GraphQLException("Sesi tidak valid.");
+            }
+
+            var user = await context.Users.FindAsync(userId);
+            if (user == null) throw new GraphQLException("Pengguna tidak ditemukan.");
+            return user;
+        }
+
         [Authorize(Roles = new[] { "SUPER_ADMIN", "KEPALA_SEKOLAH" })]
         public async Task<List<User>> GetUsers([Service] ApplicationDbContext context)
         {

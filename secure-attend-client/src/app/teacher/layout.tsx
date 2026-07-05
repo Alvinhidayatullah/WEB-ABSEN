@@ -33,7 +33,7 @@ const GRAPHQL_URL = "/api/graphql";
       <aside className="w-full md:w-64 bg-card border-b md:border-b-0 md:border-r border-primary/10 flex flex-col p-4 md:p-6 shadow-sm z-[9999] sticky top-0 md:h-screen overflow-hidden">
         <div className="flex-1 flex flex-col gap-4 w-full">
           <div>
-            <h2 className="text-xl md:text-2xl font-black tracking-tighter">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tighter">
               <span className="text-foreground">Ruang</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary to-emerald-400">Hadir</span>
             </h2>

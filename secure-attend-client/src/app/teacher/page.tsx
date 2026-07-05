@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
+import EditProfileModal from "@/components/EditProfileModal";
 
 const DynamicMap = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -62,6 +63,8 @@ export default function TeacherDashboard() {
   const [keterangan, setKeterangan] = useState("");
   const [isSubmittingPermit, setIsSubmittingPermit] = useState(false);
   const [locationError, setLocationError] = useState<string | null>("Memeriksa akses lokasi GPS...");
+  const [profile, setProfile] = useState<{ nama: string } | null>(null);
+  const [editProfileModalOpen, setEditProfileModalOpen] = useState(false);
 
   useEffect(() => {
     fetchHistory();
@@ -110,11 +113,12 @@ export default function TeacherDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ query: `query { me { tanggal jamMasuk status latitude longitude isMockLocation keterangan } }` })
+        body: JSON.stringify({ query: `query { me { tanggal jamMasuk status latitude longitude isMockLocation keterangan } myProfile { nama } }` })
       });
       if (res.ok) {
         const json = await res.json();
         if (json.data?.me) setHistory(json.data.me);
+        if (json.data?.myProfile) setProfile(json.data.myProfile);
       }
     } catch (err) { console.error(err); }
   }
@@ -328,6 +332,19 @@ export default function TeacherDashboard() {
         </div>
       )}
       <div className={`space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative ${locationError ? 'opacity-0 pointer-events-none' : ''}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Halo, {profile?.nama || "Guru"}! 👋</h1>
+            <p className="text-foreground/60 text-sm mt-1">Selamat datang di Dasbor Absensi Geofence.</p>
+          </div>
+          <button 
+            onClick={() => setEditProfileModalOpen(true)} 
+            className="px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors w-max"
+          >
+            Edit Profil
+          </button>
+        </div>
+
         {permitModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in p-4">
             <div className="bg-card w-full max-w-md p-6 rounded-2xl shadow-xl border border-primary/20">
@@ -459,6 +476,13 @@ export default function TeacherDashboard() {
           )}
         </div>
       </div>
+      
+      <EditProfileModal 
+        isOpen={editProfileModalOpen}
+        onClose={() => setEditProfileModalOpen(false)}
+        currentNama={profile?.nama || ""}
+        onSuccess={() => fetchHistory()}
+      />
     </>
   );
 }
