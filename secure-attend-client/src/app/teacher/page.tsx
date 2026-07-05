@@ -106,7 +106,7 @@ export default function TeacherDashboard() {
     return new Promise((resolve, reject) => {
       const samples: { lat: number; lng: number; accuracy: number; ts: number }[] = [];
       let attempts = 0;
-      const MAX_SAMPLES = 3;
+      const MAX_SAMPLES = 5; // Ditingkatkan dari 3 ke 5 untuk deteksi jitter
 
       const collectSample = () => {
         navigator.geolocation.getCurrentPosition(
@@ -143,8 +143,22 @@ export default function TeacherDashboard() {
               }
 
               const maxSpread = Math.max(...samples.map(s => haversineDistance(s.lat, s.lng, avgLat, avgLng)));
+              
+              // === ANTI-CHEAT: MICRO-JITTER & PERFECT ACCURACY ANOMALY ===
+              if (maxSpread === 0) {
+                reject(new Error("⛔ Fake GPS Terdeteksi (Sinyal Terkunci Statis). Harap matikan aplikasi lokasi palsu!"));
+                return;
+              }
+
+              const firstAcc = samples[0].accuracy;
+              const isAccuracyIdentical = samples.every(s => s.accuracy === firstAcc);
+              if (maxSpread < 0.1 && isAccuracyIdentical) {
+                reject(new Error("⛔ Fake GPS Terdeteksi (Akurasi & Jitter Tidak Wajar). Harap matikan aplikasi lokasi palsu!"));
+                return;
+              }
+
               if (maxSpread > 10) {
-                reject(new Error(`Koordinat GPS tidak stabil (variasi ${Math.round(maxSpread)}m). Kemungkinan Fake GPS.`));
+                reject(new Error(`Koordinat GPS tidak stabil (variasi ${Math.round(maxSpread)}m). Pindah ke ruang terbuka.`));
                 return;
               }
 
