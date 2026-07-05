@@ -141,6 +141,40 @@ namespace SecureAttend.API.GraphQL
             var lat = latitude.Value;
             var lng = longitude.Value;
 
+            // === LAYER 2.5: Server-Side Movement Anomaly Detection ===
+            var lastLoc = await context.UserLocations
+                .Where(ul => ul.UserId == userId)
+                .OrderByDescending(ul => ul.UpdatedAt)
+                .FirstOrDefaultAsync();
+
+            if (lastLoc != null)
+            {
+                double distKm = CalculateDistanceMeters(lastLoc.Latitude, lastLoc.Longitude, lat, lng) / 1000.0;
+                double hoursPassed = (DateTime.UtcNow - lastLoc.UpdatedAt).TotalHours;
+                
+                // Hanya cek anomali jika jarak waktu kurang dari 1 jam
+                if (hoursPassed > 0 && hoursPassed < 1.0) 
+                {
+                    double speedKmh = distKm / hoursPassed;
+                    if (speedKmh > 60.0) // Batas kecepatan 60 km/jam (1 km / menit)
+                    {
+                        throw new GraphQLException($"Akses Ditolak! Pergerakan tidak wajar terdeteksi (Kecepatan ~{Math.Round(speedKmh)} km/jam). Harap matikan aplikasi lokasi palsu atau tunggu beberapa saat.");
+                    }
+                }
+            }
+
+            // Simpan lokasi terbaru ke riwayat
+            if (lastLoc != null)
+            {
+                lastLoc.Latitude = lat;
+                lastLoc.Longitude = lng;
+                lastLoc.UpdatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                context.UserLocations.Add(new UserLocation { UserId = userId, Latitude = lat, Longitude = lng, UpdatedAt = DateTime.UtcNow });
+            }
+
             // === LAYER 3: Validasi batas wilayah Indonesia ===
             // Wilayah Indonesia: Lat -11 s/d 6, Lng 95 s/d 141
             if (lat < -11.0 || lat > 6.0 || lng < 95.0 || lng > 141.0)
@@ -178,6 +212,32 @@ namespace SecureAttend.API.GraphQL
             await context.SaveChangesAsync();
 
             return new MessagePayload { Message = $"Absen sukses! Tervalidasi dalam radius {Math.Round(distance)}m dari SMK YASDA.", Success = true };
+        }
+
+        [Authorize(Roles = new[] { "GURU", "KEPALA_SEKOLAH" })]
+        public async Task<bool> TrackLocation(
+            double latitude,
+            double longitude,
+            [Service] ApplicationDbContext context,
+            [Service] IHttpContextAccessor httpContextAccessor)
+        {
+            var userIdStr = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId)) return false;
+
+            var lastLoc = await context.UserLocations.FirstOrDefaultAsync(ul => ul.UserId == userId);
+            if (lastLoc != null)
+            {
+                lastLoc.Latitude = latitude;
+                lastLoc.Longitude = longitude;
+                lastLoc.UpdatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                context.UserLocations.Add(new UserLocation { UserId = userId, Latitude = latitude, Longitude = longitude, UpdatedAt = DateTime.UtcNow });
+            }
+            
+            await context.SaveChangesAsync();
+            return true;
         }
 
         [Authorize(Roles = new[] { "GURU", "KEPALA_SEKOLAH" })]

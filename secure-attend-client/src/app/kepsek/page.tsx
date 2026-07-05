@@ -78,13 +78,30 @@ export default function KepsekDashboard() {
         (err) => {
           setLocationError("Akses lokasi ditolak atau tidak tersedia. Wajib aktifkan GPS/Lokasi untuk menggunakan aplikasi.");
         },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
       );
       return () => navigator.geolocation.clearWatch(watchId);
     } else {
       setLocationError("Perangkat atau browser Anda tidak mendukung GPS.");
     }
   }, []);
+
+  // Background Tracker untuk mendeteksi anomali jarak dan waktu jika Fake GPS tiba-tiba dinyalakan
+  useEffect(() => {
+    if (userLat === null || userLng === null) return;
+    const intervalId = setInterval(() => {
+      fetch("/api/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          query: `mutation Track($lat: Float!, $lng: Float!) { trackLocation(latitude: $lat, longitude: $lng) }`,
+          variables: { lat: userLat, lng: userLng }
+        })
+      }).catch(() => {});
+    }, 30000); // Kirim lokasi asli diam-diam tiap 30 detik
+    return () => clearInterval(intervalId);
+  }, [userLat, userLng]);
 
   async function fetchHistory() {
     try {
@@ -104,13 +121,15 @@ export default function KepsekDashboard() {
 
   async function getSampledPosition(): Promise<{ lat: number; lng: number; accuracy: number; isMock: boolean }> {
     return new Promise((resolve, reject) => {
-      const samples: { lat: number; lng: number; accuracy: number; ts: number }[] = [];
+      const samples: { lat: number; lng: number; accuracy: number; ts: number, ttf: number }[] = [];
       let attempts = 0;
       const MAX_SAMPLES = 5; // Ditingkatkan dari 3 ke 5 untuk deteksi jitter
 
       const collectSample = () => {
+        const startTime = Date.now();
         navigator.geolocation.getCurrentPosition(
           (pos) => {
+            const timeToFix = Date.now() - startTime;
             attempts++;
             setCheckInStep(`Mengambil sampel GPS ${attempts}/${MAX_SAMPLES}...`);
             samples.push({
@@ -118,6 +137,7 @@ export default function KepsekDashboard() {
               lng: pos.coords.longitude,
               accuracy: pos.coords.accuracy,
               ts: pos.timestamp,
+              ttf: timeToFix
             });
 
             if (samples.length >= 2) {
@@ -152,8 +172,12 @@ export default function KepsekDashboard() {
 
               const firstAcc = samples[0].accuracy;
               const isAccuracyIdentical = samples.every(s => s.accuracy === firstAcc);
-              if (maxSpread < 0.1 && isAccuracyIdentical) {
-                reject(new Error("⛔ Fake GPS Terdeteksi (Akurasi & Jitter Tidak Wajar). Harap matikan aplikasi lokasi palsu!"));
+              
+              // Cek TTF (Time To Fix). Jika instan (< 50ms) di semua sampel + akurasi identik, itu Fake GPS baca cache memory.
+              const allInstantFix = samples.every(s => s.ttf < 50);
+              
+              if ((maxSpread < 0.1 || allInstantFix) && isAccuracyIdentical) {
+                reject(new Error("⛔ Fake GPS Terdeteksi (Respons instan tidak wajar). Harap matikan aplikasi lokasi palsu!"));
                 return;
               }
 

@@ -14,6 +14,7 @@ namespace SecureAttend.API.Data
         public DbSet<Attendance> Attendances { get; set; } = null!;
         public DbSet<LeaveRequest> LeaveRequests { get; set; } = null!;
         public DbSet<SchoolConfig> SchoolConfigs { get; set; } = null!;
+        public DbSet<UserLocation> UserLocations { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
